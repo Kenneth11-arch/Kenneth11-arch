@@ -64,6 +64,13 @@ const App = () => {
     return () => clearInterval(interval);
   }, [token]);
 
+  // Fetch sports data when sport filter changes
+  useEffect(() => {
+    if (selectedSport !== 'All Sports') {
+      fetchSportsByCategory(selectedSport);
+    }
+  }, [selectedSport]);
+
   const fetchUserProfile = async () => {
     try {
       const response = await axios.get(`${API}/user/profile`, {
@@ -83,11 +90,41 @@ const App = () => {
       const response = await axios.get(`${API}/sports/matches`);
       setSportsData(prevData => ({
         ...prevData,
-        liveMatches: response.data.live_matches,
-        upcomingMatches: response.data.upcoming_matches
+        liveMatches: response.data.live_matches || [],
+        upcomingMatches: response.data.upcoming_matches || [],
+        allSportsData: response.data.by_sport || {}
       }));
     } catch (error) {
       console.error('Error fetching sports data:', error);
+    }
+  };
+
+  const fetchSportsByCategory = async (sport) => {
+    try {
+      const sportName = sport.toLowerCase().replace(' ', '');
+      const response = await axios.get(`${API}/sports/matches/${sportName}`);
+      
+      // Update the live and upcoming matches with filtered data
+      const filteredMatches = response.data.matches || [];
+      const liveFiltered = filteredMatches.filter(m => m.is_live);
+      const upcomingFiltered = filteredMatches.filter(m => !m.is_live);
+      
+      setSportsData(prevData => ({
+        ...prevData,
+        liveMatches: liveFiltered,
+        upcomingMatches: upcomingFiltered,
+        filteredSport: sport
+      }));
+      
+      // Log activity
+      logActivity('sport_filter_applied', {
+        sport: sport,
+        matches_found: filteredMatches.length,
+        live_matches: liveFiltered.length,
+        upcoming_matches: upcomingFiltered.length
+      });
+    } catch (error) {
+      console.error('Error fetching filtered sports data:', error);
     }
   };
 
