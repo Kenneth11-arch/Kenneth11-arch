@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the complete Bet365 clone betting system with various scenarios including user authentication, betting system, API endpoints, special account features, and data storage."
+user_problem_statement: "Test the enhanced Bet365 clone with USDT withdrawal functionality and live data features."
 
 backend:
   - task: "User Registration"
@@ -236,6 +236,54 @@ backend:
       - working: true
         agent: "testing"
         comment: "Error handling works correctly. Appropriate error responses are returned for invalid login attempts and insufficient balance scenarios."
+        
+  - task: "USDT Withdrawal System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested USDT withdrawal functionality. Users can request withdrawals from their winnings to the specified USDT wallet address. Minimum withdrawal amount ($10) is enforced. Withdrawal history is tracked correctly."
+
+  - task: "Enhanced User System with Winnings"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Verified special account has $5,000 initial winnings. Winnings are tracked separately from balance and are updated correctly when bets are settled as won."
+
+  - task: "Withdrawal Processing by Special Account"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Special account can process withdrawal requests through different states (processing, completed). Regular users are prevented from processing withdrawals."
+
+  - task: "Withdrawal Activity Logging"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Withdrawal activities are properly logged, including withdrawal requests and status changes. All activities can be retrieved through the API."
 
 frontend:
   - task: "Frontend Implementation"
@@ -253,17 +301,15 @@ frontend:
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "User Registration"
-    - "User Login"
-    - "Special Account Privileges"
-    - "Bet Placement with Regular Balance"
-    - "Bet Placement with Free Bets"
-    - "Bet Settlement by Special Account"
+    - "USDT Withdrawal System"
+    - "Enhanced User System with Winnings"
+    - "Withdrawal Processing by Special Account"
+    - "Withdrawal Activity Logging"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
@@ -271,3 +317,5 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: "Completed comprehensive testing of all backend API endpoints. All backend functionality is working correctly. Created and executed backend_test.py to test all required scenarios. The special account (kb4211551@gmail.com) has the expected privileges and can settle bets. Regular users can register, login, place bets with both regular balance and free bets, and view their bet history and activity logs."
+  - agent: "testing"
+    message: "Completed testing of the enhanced Bet365 clone with USDT withdrawal functionality. All new features are working correctly. The USDT withdrawal system allows users to withdraw their winnings to the specified wallet address (TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ). The special account has $5,000 initial winnings and can process withdrawal requests. Winnings are tracked separately from balance and updated correctly when bets are settled as won. All withdrawal activities are properly logged."
