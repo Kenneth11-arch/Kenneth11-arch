@@ -404,6 +404,318 @@ class Bet365CloneBackendTest(unittest.TestCase):
             self.assertEqual(response.status_code, 400)
         
         print("Error handling tests completed successfully")
+        
+    def test_13_verify_special_account_winnings(self):
+        """Verify the special account has initial winnings of $5,000"""
+        print("\n=== Testing Special Account Initial Winnings ===")
+        
+        # Ensure we have the special account token
+        if not self.special_user_token:
+            self.test_02_login_special_account()
+        
+        # Check user profile to verify winnings
+        headers = {"Authorization": f"Bearer {self.special_user_token}"}
+        response = requests.get(f"{API_URL}/user/profile", headers=headers)
+        response_data = response.json()
+        
+        print(f"Special Account Profile Response: {json.dumps(response_data, indent=2)}")
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data["email"], self.special_email)
+        self.assertTrue(response_data["is_special_account"])
+        self.assertEqual(response_data["winnings"], 5000.0)  # Verify $5,000 initial winnings
+        
+        print("Special account has the expected initial winnings of $5,000")
+        
+    def test_14_winnings_tracking_after_bet_settlement(self):
+        """Test winnings tracking when bets are settled as won"""
+        print("\n=== Testing Winnings Tracking After Bet Settlement ===")
+        
+        # Ensure we have both user tokens and a placed bet
+        if not self.test_user_token:
+            self.test_01_register_new_user()
+        if not self.special_user_token:
+            self.test_02_login_special_account()
+        
+        # Get user profile before bet settlement
+        headers = {"Authorization": f"Bearer {self.test_user_token}"}
+        response = requests.get(f"{API_URL}/user/profile", headers=headers)
+        user_before = response.json()
+        initial_winnings = user_before["winnings"]
+        
+        print(f"Initial user winnings: {initial_winnings}")
+        
+        # Place a new bet
+        if not hasattr(self, 'test_match'):
+            self.test_05_get_sports_matches()
+            
+        bet_data = {
+            "match_id": self.test_match["id"],
+            "match_description": f"{self.test_match['home_team']} vs {self.test_match['away_team']}",
+            "bet_type": "home_win",
+            "odds": self.test_match["home_odds"],
+            "stake": 20.0,
+            "is_free_bet": False
+        }
+        
+        response = requests.post(f"{API_URL}/bet/place", headers=headers, json=bet_data)
+        bet_response = response.json()
+        new_bet_id = bet_response["bet"]["id"]
+        potential_winnings = bet_response["bet"]["potential_winnings"]
+        
+        print(f"Placed new bet with potential winnings: {potential_winnings}")
+        
+        # Settle the bet as won using special account
+        headers = {"Authorization": f"Bearer {self.special_user_token}"}
+        response = requests.post(f"{API_URL}/bet/{new_bet_id}/settle?result=won", headers=headers)
+        settle_response = response.json()
+        
+        print(f"Bet settlement response: {json.dumps(settle_response, indent=2)}")
+        
+        # Check user profile after bet settlement
+        headers = {"Authorization": f"Bearer {self.test_user_token}"}
+        response = requests.get(f"{API_URL}/user/profile", headers=headers)
+        user_after = response.json()
+        final_winnings = user_after["winnings"]
+        
+        print(f"Final user winnings: {final_winnings}")
+        
+        # Verify winnings increased by the potential winnings amount
+        self.assertEqual(final_winnings, initial_winnings + potential_winnings)
+        
+        print(f"Winnings correctly tracked after bet settlement. Increased by {potential_winnings}")
+        
+    def test_15_usdt_withdrawal_valid_amount(self):
+        """Test USDT withdrawal with valid amount from winnings"""
+        print("\n=== Testing USDT Withdrawal with Valid Amount ===")
+        
+        # Ensure we have the special account token (which has winnings)
+        if not self.special_user_token:
+            self.test_02_login_special_account()
+            self.test_13_verify_special_account_winnings()
+        
+        # Get current winnings
+        headers = {"Authorization": f"Bearer {self.special_user_token}"}
+        response = requests.get(f"{API_URL}/user/profile", headers=headers)
+        user_before = response.json()
+        initial_winnings = user_before["winnings"]
+        
+        print(f"Initial winnings: {initial_winnings}")
+        
+        # Request withdrawal (less than available winnings)
+        withdrawal_amount = 100.0
+        withdrawal_data = {
+            "amount": withdrawal_amount
+        }
+        
+        response = requests.post(f"{API_URL}/withdrawal/request", headers=headers, json=withdrawal_data)
+        response_data = response.json()
+        
+        print(f"Withdrawal Request Response Status: {response.status_code}")
+        print(f"Withdrawal Request Response: {json.dumps(response_data, indent=2)}")
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("message", response_data)
+        self.assertIn("withdrawal_id", response_data)
+        self.assertEqual(response_data["amount"], withdrawal_amount)
+        self.assertEqual(response_data["usdt_address"], USDT_WALLET_ADDRESS)
+        self.assertEqual(response_data["status"], "pending")
+        
+        # Store withdrawal ID for later tests
+        self.withdrawal_id = response_data["withdrawal_id"]
+        
+        # Check updated winnings
+        response = requests.get(f"{API_URL}/user/profile", headers=headers)
+        user_after = response.json()
+        final_winnings = user_after["winnings"]
+        
+        print(f"Final winnings after withdrawal: {final_winnings}")
+        
+        # Verify winnings decreased by the withdrawal amount
+        self.assertEqual(final_winnings, initial_winnings - withdrawal_amount)
+        
+        print(f"Successfully requested USDT withdrawal of {withdrawal_amount}")
+        
+    def test_16_usdt_withdrawal_insufficient_winnings(self):
+        """Test USDT withdrawal with insufficient winnings"""
+        print("\n=== Testing USDT Withdrawal with Insufficient Winnings ===")
+        
+        # Ensure we have the test user token (which has no winnings)
+        if not self.test_user_token:
+            self.test_01_register_new_user()
+        
+        # Get current winnings
+        headers = {"Authorization": f"Bearer {self.test_user_token}"}
+        response = requests.get(f"{API_URL}/user/profile", headers=headers)
+        user_data = response.json()
+        current_winnings = user_data["winnings"]
+        
+        print(f"Current winnings: {current_winnings}")
+        
+        # Request withdrawal (more than available winnings)
+        withdrawal_amount = current_winnings + 100.0
+        withdrawal_data = {
+            "amount": withdrawal_amount
+        }
+        
+        response = requests.post(f"{API_URL}/withdrawal/request", headers=headers, json=withdrawal_data)
+        
+        print(f"Insufficient Winnings Withdrawal Response Status: {response.status_code}")
+        if response.status_code != 200:
+            print(f"Error response: {response.json()}")
+        
+        self.assertEqual(response.status_code, 400)
+        
+        print("Successfully verified withdrawal request fails with insufficient winnings")
+        
+    def test_17_usdt_withdrawal_below_minimum(self):
+        """Test USDT withdrawal below minimum amount ($10)"""
+        print("\n=== Testing USDT Withdrawal Below Minimum Amount ===")
+        
+        # Ensure we have the special account token (which has winnings)
+        if not self.special_user_token:
+            self.test_02_login_special_account()
+        
+        # Request withdrawal below minimum
+        headers = {"Authorization": f"Bearer {self.special_user_token}"}
+        withdrawal_data = {
+            "amount": 5.0  # Below $10 minimum
+        }
+        
+        response = requests.post(f"{API_URL}/withdrawal/request", headers=headers, json=withdrawal_data)
+        
+        print(f"Below Minimum Withdrawal Response Status: {response.status_code}")
+        if response.status_code != 200:
+            print(f"Error response: {response.json()}")
+        
+        self.assertEqual(response.status_code, 400)
+        
+        print("Successfully verified withdrawal request fails when below minimum amount")
+        
+    def test_18_withdrawal_history(self):
+        """Test withdrawal history tracking"""
+        print("\n=== Testing Withdrawal History Tracking ===")
+        
+        # Ensure we have the special account token and have made a withdrawal
+        if not self.special_user_token:
+            self.test_02_login_special_account()
+        if not self.withdrawal_id:
+            self.test_15_usdt_withdrawal_valid_amount()
+        
+        # Get withdrawal history
+        headers = {"Authorization": f"Bearer {self.special_user_token}"}
+        response = requests.get(f"{API_URL}/withdrawals", headers=headers)
+        response_data = response.json()
+        
+        print(f"Withdrawal History Response Status: {response.status_code}")
+        print(f"Withdrawal History Response (count): {len(response_data)}")
+        if response_data:
+            print(f"Sample withdrawal: {json.dumps(response_data[0], indent=2)}")
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response_data, list)
+        self.assertGreaterEqual(len(response_data), 1)
+        
+        # Verify our withdrawal is in the history
+        found_withdrawal = False
+        for withdrawal in response_data:
+            if withdrawal["id"] == self.withdrawal_id:
+                found_withdrawal = True
+                self.assertEqual(withdrawal["status"], "pending")
+                self.assertEqual(withdrawal["usdt_address"], USDT_WALLET_ADDRESS)
+                break
+        
+        self.assertTrue(found_withdrawal, "Created withdrawal not found in history")
+        print(f"Successfully retrieved withdrawal history with {len(response_data)} withdrawals")
+        
+    def test_19_process_withdrawal_special_account(self):
+        """Test special account withdrawal processing capabilities"""
+        print("\n=== Testing Special Account Withdrawal Processing ===")
+        
+        # Ensure we have the special account token and a withdrawal
+        if not self.special_user_token:
+            self.test_02_login_special_account()
+        if not self.withdrawal_id:
+            self.test_15_usdt_withdrawal_valid_amount()
+        
+        # Process the withdrawal
+        headers = {"Authorization": f"Bearer {self.special_user_token}"}
+        new_status = "processing"
+        
+        response = requests.post(f"{API_URL}/withdrawal/{self.withdrawal_id}/process?new_status={new_status}", headers=headers)
+        response_data = response.json()
+        
+        print(f"Process Withdrawal Response Status: {response.status_code}")
+        print(f"Process Withdrawal Response: {json.dumps(response_data, indent=2)}")
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("message", response_data)
+        self.assertEqual(response_data["withdrawal_id"], self.withdrawal_id)
+        self.assertEqual(response_data["status"], new_status)
+        
+        # Verify regular user can't process withdrawals
+        if self.test_user_token:
+            headers = {"Authorization": f"Bearer {self.test_user_token}"}
+            response = requests.post(f"{API_URL}/withdrawal/{self.withdrawal_id}/process?new_status=completed", headers=headers)
+            
+            print(f"Regular User Process Withdrawal Response Status: {response.status_code}")
+            self.assertNotEqual(response.status_code, 200)
+            print("Verified regular users cannot process withdrawals")
+        
+        print(f"Successfully processed withdrawal to status: {new_status}")
+        
+        # Complete the withdrawal
+        headers = {"Authorization": f"Bearer {self.special_user_token}"}
+        new_status = "completed"
+        
+        response = requests.post(f"{API_URL}/withdrawal/{self.withdrawal_id}/process?new_status={new_status}", headers=headers)
+        response_data = response.json()
+        
+        print(f"Complete Withdrawal Response Status: {response.status_code}")
+        print(f"Complete Withdrawal Response: {json.dumps(response_data, indent=2)}")
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data["status"], new_status)
+        
+        print(f"Successfully completed withdrawal process")
+        
+    def test_20_withdrawal_activity_logging(self):
+        """Test logging of withdrawal activities"""
+        print("\n=== Testing Withdrawal Activity Logging ===")
+        
+        # Ensure we have the special account token and have processed a withdrawal
+        if not self.special_user_token:
+            self.test_02_login_special_account()
+        if not self.withdrawal_id:
+            self.test_15_usdt_withdrawal_valid_amount()
+            self.test_19_process_withdrawal_special_account()
+        
+        # Get activity logs
+        headers = {"Authorization": f"Bearer {self.special_user_token}"}
+        response = requests.get(f"{API_URL}/activities", headers=headers)
+        activities = response.json()
+        
+        print(f"Activities Response Status: {response.status_code}")
+        print(f"Activities Response (count): {len(activities)}")
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Check for withdrawal-related activities
+        withdrawal_request_found = False
+        withdrawal_processed_found = False
+        
+        for activity in activities:
+            if activity["action"] == "withdrawal_requested":
+                withdrawal_request_found = True
+                print(f"Found withdrawal_requested activity: {json.dumps(activity, indent=2)}")
+            elif activity["action"] == "withdrawal_processed":
+                withdrawal_processed_found = True
+                print(f"Found withdrawal_processed activity: {json.dumps(activity, indent=2)}")
+        
+        self.assertTrue(withdrawal_request_found, "Withdrawal request activity not found")
+        self.assertTrue(withdrawal_processed_found, "Withdrawal processed activity not found")
+        
+        print("Successfully verified withdrawal activities are properly logged")
 
 def run_tests():
     # Create a test suite
