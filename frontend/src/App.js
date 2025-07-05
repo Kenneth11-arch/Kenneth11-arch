@@ -8,6 +8,9 @@ import SportsBetting from './components/Sports/SportsBetting';
 import BetHistory from './components/History/BetHistory';
 import SettledMatches from './components/Settled/SettledMatches';
 import Wallet from './components/Wallet/Wallet';
+import UltraExchange from './components/UltraExchange/UltraExchange';
+import ArbitrageSystem from './components/Arbitrage/ArbitrageSystem';
+import Settings from './components/Settings/Settings';
 
 const AuthenticatedApp = () => {
   const [activeSection, setActiveSection] = useState('sports');
@@ -38,6 +41,12 @@ const AuthenticatedApp = () => {
         return <SettledMatches />;
       case 'wallet':
         return <Wallet />;
+      case 'ultra':
+        return <UltraExchange />;
+      case 'arbitrage':
+        return <ArbitrageSystem />;
+      case 'settings':
+        return <Settings />;
       default:
         return <SportsBetting />;
     }
