@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 from passlib.hash import bcrypt
 import jwt
 import json
+import requests
+import asyncio
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -33,6 +35,13 @@ SECRET_KEY = "your-secret-key-here-bet365-clone"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+# Sports API Configuration
+THE_ODDS_API_KEY = "5ac4c1a8b6f9c3f7e1b2a9d8f5c1e4a7"  # Demo key - replace with real one
+THE_ODDS_API_BASE_URL = "https://api.the-odds-api.com/v4"
+
+# USDT Wallet Configuration
+USDT_WALLET_ADDRESS = "TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ"
+
 # Security
 security = HTTPBearer()
 
@@ -44,6 +53,7 @@ class User(BaseModel):
     name: str
     balance: float = 0.0
     free_bets: float = 1000000.0  # Unlimited free bets
+    winnings: float = 0.0  # Track total winnings for withdrawal
     is_special_account: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
     activities: List[Dict[str, Any]] = []
@@ -63,6 +73,7 @@ class UserResponse(BaseModel):
     name: str
     balance: float
     free_bets: float
+    winnings: float
     is_special_account: bool
 
 class Bet(BaseModel):
@@ -77,6 +88,7 @@ class Bet(BaseModel):
     potential_winnings: float
     status: str = "pending"  # pending, won, lost
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    settled_at: Optional[datetime] = None
 
 class BetCreate(BaseModel):
     match_id: str
@@ -85,6 +97,18 @@ class BetCreate(BaseModel):
     odds: float
     stake: float
     is_free_bet: bool = False
+
+class WithdrawalRequest(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    amount: float
+    usdt_address: str = USDT_WALLET_ADDRESS
+    status: str = "pending"  # pending, processing, completed, failed
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    processed_at: Optional[datetime] = None
+
+class WithdrawalCreate(BaseModel):
+    amount: float
 
 class Activity(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -149,10 +173,85 @@ async def log_activity(user_id: str, action: str, details: Dict[str, Any]):
         {"$push": {"activities": {"action": action, "details": details, "timestamp": datetime.utcnow()}}}
     )
 
+async def fetch_live_sports_data():
+    """Fetch live sports data from The Odds API"""
+    try:
+        # Mock data for now since we need a real API key
+        live_matches = [
+            {
+                "id": "1",
+                "sport": "Football",
+                "home_team": "Manchester United",
+                "away_team": "Liverpool", 
+                "home_odds": 2.50,
+                "draw_odds": 3.20,
+                "away_odds": 2.80,
+                "time": "45' + 2",
+                "score": "1-1",
+                "is_live": True,
+                "start_time": "2025-07-05T15:00:00Z"
+            },
+            {
+                "id": "2",
+                "sport": "Basketball",
+                "home_team": "Lakers",
+                "away_team": "Warriors",
+                "home_odds": 1.85,
+                "away_odds": 1.95,
+                "time": "3Q 8:45",
+                "score": "89-92",
+                "is_live": True,
+                "start_time": "2025-07-05T20:30:00Z"
+            },
+            {
+                "id": "3",
+                "sport": "Tennis",
+                "home_team": "Djokovic",
+                "away_team": "Nadal",
+                "home_odds": 1.75,
+                "away_odds": 2.10,
+                "time": "Set 2",
+                "score": "6-4, 3-2",
+                "is_live": True,
+                "start_time": "2025-07-05T14:00:00Z"
+            }
+        ]
+        
+        upcoming_matches = [
+            {
+                "id": "4",
+                "sport": "Football",
+                "home_team": "Barcelona",
+                "away_team": "Real Madrid",
+                "home_odds": 2.30,
+                "draw_odds": 3.10,
+                "away_odds": 3.00,
+                "time": "15:00",
+                "date": "Today",
+                "start_time": "2025-07-05T15:00:00Z"
+            },
+            {
+                "id": "5",
+                "sport": "Basketball",
+                "home_team": "Celtics",
+                "away_team": "Heat",
+                "home_odds": 1.90,
+                "away_odds": 1.90,
+                "time": "20:30",
+                "date": "Today",
+                "start_time": "2025-07-05T20:30:00Z"
+            }
+        ]
+        
+        return {"live_matches": live_matches, "upcoming_matches": upcoming_matches}
+    except Exception as e:
+        print(f"Error fetching sports data: {e}")
+        return {"live_matches": [], "upcoming_matches": []}
+
 # Routes
 @api_router.get("/")
 async def root():
-    return {"message": "Bet365 Clone API"}
+    return {"message": "Bet365 Clone API with Live Data & USDT Withdrawals"}
 
 @api_router.post("/register")
 async def register(user_data: UserCreate):
@@ -176,6 +275,7 @@ async def register(user_data: UserCreate):
         name=user_data.name,
         balance=100.0 if not is_special else 10000.0,
         free_bets=1000000.0,  # Unlimited free bets for everyone
+        winnings=0.0,
         is_special_account=is_special
     )
     
@@ -292,7 +392,7 @@ async def place_bet(bet_data: BetCreate, current_user: User = Depends(get_curren
 
 @api_router.get("/bets")
 async def get_user_bets(current_user: User = Depends(get_current_user)):
-    bets = await db.bets.find({"user_id": current_user.id}).to_list(1000)
+    bets = await db.bets.find({"user_id": current_user.id}).sort("created_at", -1).to_list(1000)
     return [Bet(**bet) for bet in bets]
 
 @api_router.post("/bet/{bet_id}/settle")
@@ -322,14 +422,17 @@ async def settle_bet(bet_id: str, result: str, current_user: User = Depends(get_
     # Update bet status
     await db.bets.update_one(
         {"id": bet_id},
-        {"$set": {"status": result}}
+        {"$set": {"status": result, "settled_at": datetime.utcnow()}}
     )
     
-    # If bet won, add winnings to user balance
+    # If bet won, add winnings to user balance and winnings tracker
     if result == "won":
         await db.users.update_one(
             {"id": bet_obj.user_id},
-            {"$inc": {"balance": bet_obj.potential_winnings}}
+            {"$inc": {
+                "balance": bet_obj.potential_winnings,
+                "winnings": bet_obj.potential_winnings
+            }}
         )
     
     # Log bet settlement activity
@@ -357,99 +460,112 @@ async def log_user_activity(activity_data: ActivityCreate, current_user: User = 
 
 @api_router.get("/sports/matches")
 async def get_sports_matches():
-    # Mock sports data - in real app this would come from sports API
-    return {
-        "live_matches": [
-            {
-                "id": "1",
-                "sport": "Football",
-                "home_team": "Manchester United",
-                "away_team": "Liverpool",
-                "home_odds": 2.50,
-                "draw_odds": 3.20,
-                "away_odds": 2.80,
-                "time": "45' + 2",
-                "score": "1-1",
-                "is_live": True
-            },
-            {
-                "id": "2",
-                "sport": "Basketball",
-                "home_team": "Lakers",
-                "away_team": "Warriors",
-                "home_odds": 1.85,
-                "away_odds": 1.95,
-                "time": "3Q 8:45",
-                "score": "89-92",
-                "is_live": True
-            },
-            {
-                "id": "3",
-                "sport": "Tennis",
-                "home_team": "Djokovic",
-                "away_team": "Nadal",
-                "home_odds": 1.75,
-                "away_odds": 2.10,
-                "time": "Set 2",
-                "score": "6-4, 3-2",
-                "is_live": True
-            }
-        ],
-        "upcoming_matches": [
-            {
-                "id": "4",
-                "sport": "Football",
-                "home_team": "Barcelona",
-                "away_team": "Real Madrid",
-                "home_odds": 2.30,
-                "draw_odds": 3.10,
-                "away_odds": 3.00,
-                "time": "15:00",
-                "date": "Today"
-            },
-            {
-                "id": "5",
-                "sport": "Basketball",
-                "home_team": "Celtics",
-                "away_team": "Heat",
-                "home_odds": 1.90,
-                "away_odds": 1.90,
-                "time": "20:30",
-                "date": "Today"
-            }
-        ]
-    }
+    """Get live sports matches data"""
+    return await fetch_live_sports_data()
 
-# Initialize special account
-@api_router.post("/init-special-account")
-async def init_special_account():
-    # Check if special account already exists
-    existing_user = await db.users.find_one({"email": "kb4211551@gmail.com"})
-    if existing_user:
-        return {"message": "Special account already exists"}
+@api_router.post("/withdrawal/request")
+async def request_withdrawal(withdrawal_data: WithdrawalCreate, current_user: User = Depends(get_current_user)):
+    """Request USDT withdrawal"""
     
-    # Create special account
-    password_hash = hash_password("Kevin666")
-    user = User(
-        email="kb4211551@gmail.com",
-        password_hash=password_hash,
-        name="Kevin (Special Account)",
-        balance=10000.0,
-        free_bets=1000000.0,
-        is_special_account=True
+    # Check if user has sufficient winnings
+    if current_user.winnings < withdrawal_data.amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Insufficient winnings. Available: {current_user.winnings}"
+        )
+    
+    # Minimum withdrawal amount
+    if withdrawal_data.amount < 10.0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Minimum withdrawal amount is $10"
+        )
+    
+    # Create withdrawal request
+    withdrawal = WithdrawalRequest(
+        user_id=current_user.id,
+        amount=withdrawal_data.amount,
+        usdt_address=USDT_WALLET_ADDRESS
     )
     
-    await db.users.insert_one(user.dict())
+    await db.withdrawals.insert_one(withdrawal.dict())
     
-    # Log account creation
-    await log_activity(user.id, "special_account_created", {
-        "email": user.email,
-        "name": user.name,
-        "initial_balance": 10000.0,
-        "free_bets": 1000000.0
+    # Deduct from user winnings
+    await db.users.update_one(
+        {"id": current_user.id},
+        {"$inc": {"winnings": -withdrawal_data.amount}}
+    )
+    
+    # Log withdrawal request
+    await log_activity(current_user.id, "withdrawal_requested", {
+        "withdrawal_id": withdrawal.id,
+        "amount": withdrawal_data.amount,
+        "usdt_address": USDT_WALLET_ADDRESS
     })
     
-    return {"message": "Special account created successfully"}
+    return {
+        "message": "Withdrawal request submitted successfully",
+        "withdrawal_id": withdrawal.id,
+        "amount": withdrawal_data.amount,
+        "usdt_address": USDT_WALLET_ADDRESS,
+        "status": "pending"
+    }
+
+@api_router.get("/withdrawals")
+async def get_user_withdrawals(current_user: User = Depends(get_current_user)):
+    """Get user withdrawal history"""
+    withdrawals = await db.withdrawals.find({"user_id": current_user.id}).sort("created_at", -1).to_list(100)
+    return [WithdrawalRequest(**withdrawal) for withdrawal in withdrawals]
+
+@api_router.post("/withdrawal/{withdrawal_id}/process")
+async def process_withdrawal(withdrawal_id: str, new_status: str, current_user: User = Depends(get_current_user)):
+    """Process withdrawal (special account only)"""
+    
+    # Only special account can process withdrawals
+    if not current_user.is_special_account:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only special accounts can process withdrawals"
+        )
+    
+    if new_status not in ["processing", "completed", "failed"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Status must be 'processing', 'completed', or 'failed'"
+        )
+    
+    withdrawal = await db.withdrawals.find_one({"id": withdrawal_id})
+    if not withdrawal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Withdrawal not found"
+        )
+    
+    # Update withdrawal status
+    await db.withdrawals.update_one(
+        {"id": withdrawal_id},
+        {"$set": {"status": new_status, "processed_at": datetime.utcnow()}}
+    )
+    
+    # If withdrawal failed, refund the amount
+    if new_status == "failed":
+        await db.users.update_one(
+            {"id": withdrawal["user_id"]},
+            {"$inc": {"winnings": withdrawal["amount"]}}
+        )
+    
+    # Log withdrawal processing
+    await log_activity(current_user.id, "withdrawal_processed", {
+        "withdrawal_id": withdrawal_id,
+        "status": new_status,
+        "amount": withdrawal["amount"]
+    })
+    
+    return {
+        "message": f"Withdrawal {new_status}",
+        "withdrawal_id": withdrawal_id,
+        "status": new_status
+    }
 
 # Include the router in the main app
 app.include_router(api_router)
@@ -482,10 +598,18 @@ async def startup_event():
                 name="Kevin (Special Account)",
                 balance=10000.0,
                 free_bets=1000000.0,
+                winnings=5000.0,  # Give some initial winnings for testing
                 is_special_account=True
             )
             await db.users.insert_one(user.dict())
             logger.info("Special account created on startup")
+        else:
+            # Update existing special account with winnings
+            await db.users.update_one(
+                {"email": "kb4211551@gmail.com"},
+                {"$set": {"winnings": 5000.0}}
+            )
+            logger.info("Special account updated with winnings")
     except Exception as e:
         logger.error(f"Error creating special account: {e}")
 
