@@ -871,6 +871,182 @@ const AccountActivities = ({ onClose, token }) => {
   );
 };
 
+// Withdrawal Modal Component
+const WithdrawalModal = ({ onClose, onWithdraw, user }) => {
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const handleWithdraw = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    const withdrawAmount = parseFloat(amount);
+    
+    if (withdrawAmount < 10) {
+      setError('Minimum withdrawal amount is $10');
+      setLoading(false);
+      return;
+    }
+    
+    if (withdrawAmount > user.winnings) {
+      setError('Insufficient winnings balance');
+      setLoading(false);
+      return;
+    }
+    
+    const result = await onWithdraw(withdrawAmount);
+    
+    if (!result.success) {
+      setError(result.error);
+    }
+    
+    setLoading(false);
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 rounded-lg p-6 w-96">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-white">Withdraw USDT</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            ✕
+          </button>
+        </div>
+        
+        <div className="bg-blue-900 text-blue-200 p-3 rounded mb-4 text-sm">
+          <div className="font-semibold mb-1">💰 Available Winnings: ${user.winnings ? user.winnings.toFixed(2) : '0.00'}</div>
+          <div className="text-xs">Only winnings can be withdrawn. Minimum withdrawal: $10</div>
+        </div>
+        
+        <div className="bg-gray-700 text-gray-300 p-3 rounded mb-4 text-sm">
+          <div className="font-semibold mb-1">🔗 USDT Wallet Address:</div>
+          <div className="text-xs font-mono break-all bg-gray-600 p-2 rounded">
+            TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ
+          </div>
+        </div>
+        
+        {error && (
+          <div className="bg-red-600 text-white p-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+        
+        <form onSubmit={handleWithdraw}>
+          <div className="mb-4">
+            <label className="block text-white mb-2">Withdrawal Amount (USD)</label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full bg-gray-700 text-white px-3 py-2 rounded"
+              placeholder="Enter amount"
+              min="10"
+              step="0.01"
+              required
+              disabled={loading}
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={loading || !user.winnings || user.winnings < 10}
+            className="w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Processing...' : 'Request Withdrawal'}
+          </button>
+        </form>
+        
+        <div className="mt-4 text-center text-gray-400 text-sm">
+          <p>⚡ Withdrawals are processed to USDT (TRC-20)</p>
+          <p>Processing time: 1-24 hours</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Withdrawal History Component
+const WithdrawalHistory = ({ onClose, token }) => {
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    fetchWithdrawals();
+  }, []);
+  
+  const fetchWithdrawals = async () => {
+    try {
+      const response = await axios.get(`${API}/withdrawals`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWithdrawals(response.data);
+    } catch (error) {
+      console.error('Error fetching withdrawals:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 rounded-lg p-6 w-4/5 max-w-4xl max-h-4/5 overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-white">Withdrawal History</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            ✕
+          </button>
+        </div>
+        
+        {loading ? (
+          <div className="text-center text-gray-400 py-8">Loading...</div>
+        ) : withdrawals.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">
+            <p>No withdrawals yet</p>
+            <p className="text-sm mt-2">Your withdrawal history will appear here</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {withdrawals.map((withdrawal) => (
+              <div key={withdrawal.id} className="bg-gray-700 rounded-lg p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <div className="text-white font-semibold">
+                      ${withdrawal.amount.toFixed(2)} USDT
+                    </div>
+                    <div className="text-gray-400 text-sm font-mono">
+                      To: {withdrawal.usdt_address}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      Requested: {new Date(withdrawal.created_at).toLocaleString()}
+                    </div>
+                    {withdrawal.processed_at && (
+                      <div className="text-sm text-gray-400">
+                        Processed: {new Date(withdrawal.processed_at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div className={`px-3 py-1 rounded text-sm ${
+                      withdrawal.status === 'completed' ? 'bg-green-600 text-white' :
+                      withdrawal.status === 'processing' ? 'bg-blue-600 text-white' :
+                      withdrawal.status === 'failed' ? 'bg-red-600 text-white' :
+                      'bg-yellow-600 text-black'
+                    }`}>
+                      {withdrawal.status.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Footer Component
 const Footer = () => {
   return (
