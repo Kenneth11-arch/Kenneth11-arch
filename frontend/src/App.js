@@ -375,12 +375,14 @@ const App = () => {
                     <LiveBetting 
                       matches={sportsData.liveMatches}
                       onAddToBetSlip={addToBetSlip}
+                      selectedSport={selectedSport}
                     />
                     
                     {/* Featured Matches */}
                     <FeaturedMatches 
                       matches={sportsData.upcomingMatches}
                       onAddToBetSlip={addToBetSlip}
+                      selectedSport={selectedSport}
                     />
                     
                     {/* Casino Section */}
