@@ -19,15 +19,18 @@
 backend:
   - task: "Backend API Development"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
           agent: "main"
           comment: "Created complete FastAPI backend with user authentication, sports data, betting engine, and USDT integration support"
+        - working: false
+          agent: "testing"
+          comment: "Authentication system is not working correctly. API endpoints requiring authentication return 403 Forbidden errors. The token is being generated but not properly validated. Public endpoints like /sports and /matches work correctly."
 
   - task: "Database Models and Schema"
     implemented: true
@@ -35,11 +38,14 @@ backend:
     file: "/app/backend/models.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
           agent: "main"
           comment: "Implemented comprehensive database models for users, matches, bets, transactions with proper enums and relationships"
+        - working: true
+          agent: "testing"
+          comment: "Database models are correctly implemented with proper relationships and enums. All required fields are present."
 
   - task: "Sports Data Service"
     implemented: true
@@ -47,35 +53,44 @@ backend:
     file: "/app/backend/sports_data.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
           agent: "main"
           comment: "Created sports data service with real team names for NFL, NBA, Soccer, Tennis with live match simulation"
+        - working: true
+          agent: "testing"
+          comment: "Sports data service is working correctly. API returns real team names for NFL, NBA, Soccer, and Tennis. Match data includes proper odds and timestamps."
 
   - task: "Betting Engine"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/betting_engine.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: true
     status_history:
         - working: true
           agent: "main"
           comment: "Implemented complete betting engine with bet matching, settlement, statistics, and commission handling"
+        - working: false
+          agent: "testing"
+          comment: "Unable to test betting engine functionality due to authentication issues. The betting engine code looks correct, but API endpoints return 403 Forbidden errors."
 
   - task: "User Authentication System"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/auth.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: true
     status_history:
         - working: true
           agent: "main"
           comment: "Created JWT-based authentication system with role-based access control including special VIP accounts"
+        - working: false
+          agent: "testing"
+          comment: "Authentication system has issues. User registration works and JWT tokens are generated on login, but token validation fails for protected endpoints. All authenticated endpoints return 403 Forbidden errors."
 
 frontend:
   - task: "Complete Betting Interface"
@@ -129,22 +144,26 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
+    - "User Authentication System"
     - "Backend API Development"
-    - "Complete Betting Interface"
-    - "USDT Integration"
-    - "Match Settlement System"
-  stuck_tasks: []
+    - "Betting Engine"
+  stuck_tasks: 
+    - "User Authentication System"
+    - "Backend API Development"
+    - "Betting Engine"
   test_all: true
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
       message: "Built complete bet365 clone with: 1) Real sports data (NFL/NBA/Soccer/Tennis) with legitimate team names 2) Full betting system with back/lay betting and peer-to-peer matching 3) USDT integration for real money deposits/withdrawals on Tron network 4) Match settlement system with real timestamps and profit/loss tracking 5) User authentication with VIP accounts (0% commission) 6) Unlimited free betting credits 7) Professional UI with live match indicators. Ready for backend testing to verify all APIs work correctly."
+    - agent: "testing"
+      message: "Tested the backend API and found issues with the authentication system. User registration works and JWT tokens are generated on login, but token validation fails for protected endpoints. All authenticated endpoints return 403 Forbidden errors. Public endpoints like /sports and /matches work correctly. The betting engine and USDT integration could not be fully tested due to these authentication issues."
 ## backend:
 ##   - task: "Task name"
 ##     implemented: true
