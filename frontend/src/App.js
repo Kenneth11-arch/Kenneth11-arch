@@ -63,6 +63,7 @@ const App = () => {
     if (token) {
       fetchUserProfile();
       fetchPlacedBets();
+      fetchSettledBets();
     }
     fetchSportsData();
     
@@ -144,6 +145,18 @@ const App = () => {
       setPlacedBets(response.data);
     } catch (error) {
       console.error('Error fetching placed bets:', error);
+    }
+  };
+
+  const fetchSettledBets = async () => {
+    if (!token) return;
+    try {
+      const response = await axios.get(`${API}/bets/settled`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSettledBets(response.data);
+    } catch (error) {
+      console.error('Error fetching settled bets:', error);
     }
   };
 
