@@ -435,6 +435,129 @@ async def add_free_credits(
     
     return {"success": True, "message": f"Added {amount} free credits"}
 
+# User Settings routes
+@api_router.get("/settings/profile")
+async def get_user_profile_settings(current_user: User = Depends(get_current_active_user)):
+    """Get user profile for settings"""
+    profile = await user_settings_manager.get_user_profile(current_user.id)
+    return profile
+
+@api_router.put("/settings/profile")
+async def update_user_profile(
+    updates: dict,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Update user profile"""
+    result = await user_settings_manager.update_profile(current_user.id, updates)
+    return result
+
+@api_router.post("/settings/change-password")
+async def change_user_password(
+    password_data: dict,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Change user password"""
+    current_password = password_data.get('current_password')
+    new_password = password_data.get('new_password')
+    
+    if not current_password or not new_password:
+        raise HTTPException(status_code=400, detail="Current and new password required")
+    
+    result = await user_settings_manager.change_password(
+        current_user.id, current_password, new_password
+    )
+    return result
+
+# UltraExchange routes
+@api_router.get("/ultra/matches")
+async def get_ultra_exchange_matches():
+    """Get matches with lay odds for UltraExchange"""
+    matches = await ultra_exchange.get_live_matches_with_lay_odds()
+    return matches
+
+@api_router.post("/ultra/lay-bet")
+async def place_ultra_lay_bet(
+    bet_data: dict,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Place a lay bet on UltraExchange"""
+    try:
+        result = await ultra_exchange.place_lay_bet(
+            user=current_user,
+            match_id=bet_data['match_id'],
+            selection=bet_data['selection'],
+            lay_odds=float(bet_data['lay_odds']),
+            lay_stake=float(bet_data['lay_stake'])
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.get("/ultra/my-lay-bets")
+async def get_my_lay_bets(current_user: User = Depends(get_current_active_user)):
+    """Get user's lay betting history"""
+    lay_bets = await ultra_exchange.get_user_lay_bets(current_user.id)
+    return lay_bets
+
+@api_router.get("/ultra/statistics")
+async def get_ultra_statistics(current_user: User = Depends(get_current_active_user)):
+    """Get UltraExchange statistics for user"""
+    stats = await ultra_exchange.get_exchange_statistics(current_user.id)
+    return stats
+
+# Arbitrage routes (Special accounts only)
+@api_router.get("/arbitrage/opportunities")
+async def get_arbitrage_opportunities(current_user: User = Depends(get_current_active_user)):
+    """Get risk-free arbitrage opportunities (VIP only)"""
+    if current_user.role != UserRole.SPECIAL:
+        raise HTTPException(status_code=403, detail="Access denied. VIP account required.")
+    
+    opportunities = await arbitrage_engine.get_arbitrage_opportunities(current_user)
+    return opportunities
+
+@api_router.post("/arbitrage/calculate")
+async def calculate_lay_amount(
+    calculation_data: dict,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Calculate lay amount for given bet365 stake"""
+    if current_user.role != UserRole.SPECIAL:
+        raise HTTPException(status_code=403, detail="Access denied. VIP account required.")
+    
+    result = arbitrage_engine.calculate_lay_amount(
+        bet365_stake=float(calculation_data['bet365_stake']),
+        bet365_odd=float(calculation_data['bet365_odd']),
+        ultra_lay_odd=float(calculation_data['ultra_lay_odd'])
+    )
+    return result
+
+@api_router.post("/arbitrage/auto-lay")
+async def auto_lay_arbitrage_bet(
+    arbitrage_data: dict,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Automatically place lay bet on UltraExchange for arbitrage"""
+    if current_user.role != UserRole.SPECIAL:
+        raise HTTPException(status_code=403, detail="Access denied. VIP account required.")
+    
+    try:
+        # Place the lay bet automatically
+        result = await ultra_exchange.place_lay_bet(
+            user=current_user,
+            match_id=arbitrage_data['match_id'],
+            selection=arbitrage_data['selection'],
+            lay_odds=float(arbitrage_data['lay_odds']),
+            lay_stake=float(arbitrage_data['lay_stake'])
+        )
+        
+        return {
+            'success': True,
+            'message': 'Arbitrage lay bet placed automatically',
+            'lay_bet': result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 # Include the router in the main app
 app.include_router(api_router)
 
