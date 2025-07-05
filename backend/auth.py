@@ -3,10 +3,13 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from typing import Optional
-import jwt
+from jose import JWTError, jwt
 import os
 from models import User, UserRole
 from database import get_database, USERS_COLLECTION
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Security setup
 SECRET_KEY = os.getenv("SECRET_KEY", "bet365-secret-key-change-in-production")
@@ -40,19 +43,32 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     )
     
     try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        # Log the token for debugging
+        token = credentials.credentials
+        logger.info(f"Attempting to decode token: {token[:20]}...")
+        
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
+            logger.error("No user ID found in token payload")
             raise credentials_exception
-    except jwt.PyJWTError:
+            
+        logger.info(f"Token decoded successfully for user ID: {user_id}")
+    except JWTError as e:
+        logger.error(f"JWT decode error: {e}")
+        raise credentials_exception
+    except Exception as e:
+        logger.error(f"Unexpected error during token validation: {e}")
         raise credentials_exception
     
     database = await get_database()
     user_data = await database[USERS_COLLECTION].find_one({"id": user_id})
     if user_data is None:
+        logger.error(f"User not found in database for ID: {user_id}")
         raise credentials_exception
     
     user = User(**user_data)
+    logger.info(f"User found: {user.username}")
     return user
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
@@ -73,12 +89,15 @@ async def authenticate_user(email: str, password: str) -> Optional[User]:
     user_data = await database[USERS_COLLECTION].find_one({"email": email})
     
     if not user_data:
+        logger.warning(f"User not found for email: {email}")
         return None
     
     user = User(**user_data)
     if not verify_password(password, user.password_hash):
+        logger.warning(f"Invalid password for user: {email}")
         return None
     
+    logger.info(f"User authenticated successfully: {email}")
     return user
 
 async def create_user(email: str, username: str, password: str, role: UserRole = UserRole.USER) -> User:
@@ -109,4 +128,5 @@ async def create_user(email: str, username: str, password: str, role: UserRole =
     )
     
     await database[USERS_COLLECTION].insert_one(user.dict())
+    logger.info(f"User created successfully: {email}")
     return user
