@@ -41,13 +41,15 @@ const App = () => {
   const [sportsData, setSportsData] = useState({
     liveMatches: [],
     upcomingMatches: [],
+    allSportsData: {},
+    filteredSport: null,
     sportsCategories: [
-      { name: 'Football', icon: '⚽', count: 120 },
-      { name: 'Basketball', icon: '🏀', count: 45 },
-      { name: 'Tennis', icon: '🎾', count: 78 },
-      { name: 'Baseball', icon: '⚾', count: 32 },
-      { name: 'Hockey', icon: '🏒', count: 28 },
-      { name: 'American Football', icon: '🏈', count: 15 }
+      { name: 'Football', icon: '⚽', count: 0 },
+      { name: 'Basketball', icon: '🏀', count: 0 },
+      { name: 'Tennis', icon: '🎾', count: 0 },
+      { name: 'Baseball', icon: '⚾', count: 0 },
+      { name: 'Hockey', icon: '🏒', count: 0 },
+      { name: 'American Football', icon: '🏈', count: 0 }
     ]
   });
 
