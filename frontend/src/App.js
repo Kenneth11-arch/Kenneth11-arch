@@ -19,8 +19,10 @@ const {
   RegisterModal,
   BettingHistory,
   AccountActivities,
+  DepositModal,
   WithdrawalModal,
-  WithdrawalHistory
+  SettledBetsModal,
+  MatchSettlementsModal
 } = Components;
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -30,12 +32,15 @@ const App = () => {
   const [selectedSport, setSelectedSport] = useState('All Sports');
   const [betSlipItems, setBetSlipItems] = useState([]);
   const [placedBets, setPlacedBets] = useState([]);
+  const [settledBets, setSettledBets] = useState([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showBettingHistory, setShowBettingHistory] = useState(false);
   const [showActivities, setShowActivities] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
-  const [showWithdrawalHistory, setShowWithdrawalHistory] = useState(false);
+  const [showSettledBets, setShowSettledBets] = useState(false);
+  const [showMatchSettlements, setShowMatchSettlements] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [sportsData, setSportsData] = useState({
