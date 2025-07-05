@@ -359,7 +359,7 @@ const PromotionalBanner = () => {
 };
 
 // Enhanced Bet Slip Component
-const BetSlip = ({ items, user, onRemoveItem, onUpdateStake, onUpdateBetType, onPlaceBet, onPlaceAllBets }) => {
+const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdateBetType, onPlaceBet, onPlaceAllBets }) => {
   const [activeTab, setActiveTab] = useState('betslip');
   
   const calculateTotalOdds = () => {
