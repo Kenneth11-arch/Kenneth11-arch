@@ -219,57 +219,93 @@ const SportsMenu = ({ sports, selectedSport, onSelectSport, allSportsData, liveM
 };
 
 // Live Betting Component
-const LiveBetting = ({ matches, onAddToBetSlip }) => {
+const LiveBetting = ({ matches, onAddToBetSlip, selectedSport }) => {
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
-      <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
-        <span className="bg-red-500 text-white px-2 py-1 rounded text-sm mr-2">LIVE</span>
-        Live In-Play
+      <h2 className="text-2xl font-bold text-white mb-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <span className="bg-red-500 text-white px-2 py-1 rounded text-sm mr-2 animate-pulse">LIVE</span>
+          Live In-Play
+          {selectedSport && selectedSport !== 'All Sports' && (
+            <span className="ml-2 text-green-400">({selectedSport})</span>
+          )}
+        </div>
+        <div className="text-sm text-gray-400">
+          {matches.length} live {matches.length === 1 ? 'match' : 'matches'}
+        </div>
       </h2>
       
-      <div className="space-y-4">
-        {matches.map((match) => (
-          <div key={match.id} className="bg-gray-700 rounded-lg p-4">
-            <div className="flex justify-between items-center">
-              <div className="flex-1">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-green-400 font-semibold">{match.sport}</span>
-                  <span className="text-yellow-400">{match.time}</span>
-                </div>
-                <div className="text-white">
-                  <div className="font-semibold">
-                    {match.home_team || match.homeTeam} vs {match.away_team || match.awayTeam}
+      {matches.length === 0 ? (
+        <div className="text-center text-gray-400 py-8">
+          <div className="text-lg mb-2">🎮 No live matches</div>
+          <p className="text-sm">
+            {selectedSport && selectedSport !== 'All Sports' 
+              ? `No live ${selectedSport} matches right now` 
+              : 'No live matches at the moment'
+            }
+          </p>
+          <p className="text-xs mt-2">Check back in a few minutes - matches update automatically!</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {matches.map((match) => (
+            <div key={match.id} className="bg-gray-700 rounded-lg p-4 border-l-4 border-red-500">
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-green-400 font-semibold">{match.sport}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-yellow-400">{match.time}</span>
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    </div>
                   </div>
-                  <div className="text-lg text-yellow-400">{match.score}</div>
+                  <div className="text-white">
+                    <div className="font-semibold">
+                      {match.home_team || match.homeTeam} vs {match.away_team || match.awayTeam}
+                    </div>
+                    <div className="text-lg text-yellow-400 font-bold">{match.score}</div>
+                    {match.tournament && (
+                      <div className="text-xs text-gray-400 mt-1">{match.tournament}</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex space-x-2 ml-4">
-                <button
-                  onClick={() => onAddToBetSlip(match, 'home', match.home_odds || match.homeOdds)}
-                  className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors"
-                >
-                  {match.home_team || match.homeTeam} {match.home_odds || match.homeOdds}
-                </button>
-                {(match.draw_odds || match.drawOdds) && (
+                
+                <div className="flex space-x-2 ml-4">
                   <button
-                    onClick={() => onAddToBetSlip(match, 'draw', match.draw_odds || match.drawOdds)}
-                    className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors"
+                    onClick={() => onAddToBetSlip(match, 'home', match.home_odds || match.homeOdds)}
+                    className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors transform hover:scale-105"
                   >
-                    Draw {match.draw_odds || match.drawOdds}
+                    <div className="text-center">
+                      <div className="text-xs">{match.home_team || match.homeTeam}</div>
+                      <div className="font-bold">{match.home_odds || match.homeOdds}</div>
+                    </div>
                   </button>
-                )}
-                <button
-                  onClick={() => onAddToBetSlip(match, 'away', match.away_odds || match.awayOdds)}
-                  className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors"
-                >
-                  {match.away_team || match.awayTeam} {match.away_odds || match.awayOdds}
-                </button>
+                  {(match.draw_odds || match.drawOdds) && (
+                    <button
+                      onClick={() => onAddToBetSlip(match, 'draw', match.draw_odds || match.drawOdds)}
+                      className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors transform hover:scale-105"
+                    >
+                      <div className="text-center">
+                        <div className="text-xs">Draw</div>
+                        <div className="font-bold">{match.draw_odds || match.drawOdds}</div>
+                      </div>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onAddToBetSlip(match, 'away', match.away_odds || match.awayOdds)}
+                    className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors transform hover:scale-105"
+                  >
+                    <div className="text-center">
+                      <div className="text-xs">{match.away_team || match.awayTeam}</div>
+                      <div className="font-bold">{match.away_odds || match.awayOdds}</div>
+                    </div>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
