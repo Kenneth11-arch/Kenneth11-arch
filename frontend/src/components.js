@@ -521,9 +521,40 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
       )}
       
       {activeTab === 'mybets' && (
-        <div className="text-center text-gray-400 py-8">
-          <p>View your betting history</p>
-          <p className="text-sm mt-2">Click "My Bets" in the header to see all your bets</p>
+        <div>
+          {placedBets && placedBets.length > 0 ? (
+            <div className="space-y-3">
+              <div className="text-white font-semibold mb-3">Your Recent Bets</div>
+              {placedBets.slice(0, 5).map((bet) => (
+                <div key={bet.id} className="bg-gray-700 rounded-lg p-3">
+                  <div className="text-white text-sm font-semibold">
+                    {bet.match_description}
+                  </div>
+                  <div className="text-gray-400 text-xs">
+                    {bet.bet_type} @ {bet.odds} - ${bet.stake}
+                    {bet.is_free_bet && ' (Free Bet)'}
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <div className={`text-xs px-2 py-1 rounded ${
+                      bet.status === 'won' ? 'bg-green-600 text-white' :
+                      bet.status === 'lost' ? 'bg-red-600 text-white' :
+                      'bg-yellow-600 text-black'
+                    }`}>
+                      {bet.status.toUpperCase()}
+                    </div>
+                    <div className="text-yellow-400 text-xs">
+                      Potential: ${bet.potential_winnings.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-400 py-8">
+              <p>No bets placed yet</p>
+              <p className="text-sm mt-2">Your recent bets will appear here</p>
+            </div>
+          )}
         </div>
       )}
     </div>
