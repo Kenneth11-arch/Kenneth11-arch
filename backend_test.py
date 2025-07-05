@@ -16,9 +16,11 @@ class Bet365BackendTest(unittest.TestCase):
     def setUp(self):
         """Setup for each test"""
         self.headers = {}
+        self.vip_headers = {}
+        # Use a fixed email/username to avoid registration issues in sequential test runs
         self.regular_user = {
-            "email": f"user_{random.randint(1000, 9999)}@example.com",
-            "username": f"user_{random.randint(1000, 9999)}",
+            "email": "regular_user_test@example.com",
+            "username": "regular_user_test",
             "password": "Password123!"
         }
         self.vip_user = {
@@ -26,6 +28,18 @@ class Bet365BackendTest(unittest.TestCase):
             "username": "Kevin666",
             "password": "Kevin666"
         }
+        # Pre-fetch a match ID for testing
+        try:
+            response = requests.get(f"{BACKEND_URL}/matches")
+            if response.status_code == 200:
+                matches = response.json()
+                if matches:
+                    self.match_id = matches[0]["id"]
+                    self.match_home_team = matches[0]["home_team"]
+                    self.match_away_team = matches[0]["away_team"]
+                    self.match_odds = matches[0]["odds"]
+        except:
+            pass
         
     def test_01_register_regular_user(self):
         """Test user registration with automatic 1000 free credits"""
