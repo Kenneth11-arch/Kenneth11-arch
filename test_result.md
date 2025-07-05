@@ -101,3 +101,173 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test the complete Bet365 clone betting system with various scenarios including user authentication, betting system, API endpoints, special account features, and data storage."
+
+backend:
+  - task: "User Registration"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested user registration. New users can register with email, password, and name. Default balance of 100.0 is assigned correctly."
+
+  - task: "User Login"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested login functionality. Regular and special accounts can log in correctly. JWT tokens are generated and returned properly."
+
+  - task: "Special Account Privileges"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Special account (kb4211551@gmail.com) has the expected privileges: unlimited free bets (1,000,000), high balance (10,000), and is correctly flagged as a special account."
+
+  - task: "User Profile Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "User profile endpoint returns correct user data including email, name, balance, free bets, and special account status."
+
+  - task: "Sports Matches API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Sports matches API returns mock data correctly with both live and upcoming matches. Data structure is as expected."
+
+  - task: "Bet Placement with Regular Balance"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested placing bets with regular balance. Balance is correctly deducted after bet placement."
+
+  - task: "Bet Placement with Free Bets"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested placing bets with free bets. Free bet balance is correctly deducted after bet placement."
+
+  - task: "Bet History Retrieval"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Bet history retrieval works correctly. Users can see their placed bets with all relevant details."
+
+  - task: "Bet Settlement by Special Account"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Special account can settle bets as won or lost. Regular users are correctly prevented from settling bets."
+
+  - task: "Activity Logging"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Activity logging works correctly. All user actions are logged and can be retrieved through the API."
+
+  - task: "Error Handling"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Error handling works correctly. Appropriate error responses are returned for invalid login attempts and insufficient balance scenarios."
+
+frontend:
+  - task: "Frontend Implementation"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Frontend implementation not tested by testing agent as per instructions."
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "User Registration"
+    - "User Login"
+    - "Special Account Privileges"
+    - "Bet Placement with Regular Balance"
+    - "Bet Placement with Free Bets"
+    - "Bet Settlement by Special Account"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "testing"
+    message: "Completed comprehensive testing of all backend API endpoints. All backend functionality is working correctly. Created and executed backend_test.py to test all required scenarios. The special account (kb4211551@gmail.com) has the expected privileges and can settle bets. Regular users can register, login, place bets with both regular balance and free bets, and view their bet history and activity logs."
