@@ -481,6 +481,14 @@ const App = () => {
                 />
               )}
 
+              {showDepositModal && (
+                <DepositModal 
+                  onClose={() => setShowDepositModal(false)}
+                  onDeposit={handleDeposit}
+                  user={user}
+                />
+              )}
+
               {showWithdrawalModal && (
                 <WithdrawalModal 
                   onClose={() => setShowWithdrawalModal(false)}
@@ -489,9 +497,16 @@ const App = () => {
                 />
               )}
 
-              {showWithdrawalHistory && (
-                <WithdrawalHistory 
-                  onClose={() => setShowWithdrawalHistory(false)}
+              {showSettledBets && (
+                <SettledBetsModal 
+                  onClose={() => setShowSettledBets(false)}
+                  settledBets={settledBets}
+                />
+              )}
+
+              {showMatchSettlements && (
+                <MatchSettlementsModal 
+                  onClose={() => setShowMatchSettlements(false)}
                   token={token}
                 />
               )}
