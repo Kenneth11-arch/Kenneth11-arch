@@ -18,7 +18,9 @@ const {
   LoginModal,
   RegisterModal,
   BettingHistory,
-  AccountActivities
+  AccountActivities,
+  WithdrawalModal,
+  WithdrawalHistory
 } = Components;
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -27,10 +29,13 @@ const API = `${BACKEND_URL}/api`;
 const App = () => {
   const [selectedSport, setSelectedSport] = useState('All Sports');
   const [betSlipItems, setBetSlipItems] = useState([]);
+  const [placedBets, setPlacedBets] = useState([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showBettingHistory, setShowBettingHistory] = useState(false);
   const [showActivities, setShowActivities] = useState(false);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [showWithdrawalHistory, setShowWithdrawalHistory] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [sportsData, setSportsData] = useState({
@@ -46,12 +51,17 @@ const App = () => {
     ]
   });
 
-  // Initialize app
+  // Auto-refresh sports data every 30 seconds
   useEffect(() => {
     if (token) {
       fetchUserProfile();
+      fetchPlacedBets();
     }
     fetchSportsData();
+    
+    // Set up auto-refresh for live data
+    const interval = setInterval(fetchSportsData, 30000);
+    return () => clearInterval(interval);
   }, [token]);
 
   const fetchUserProfile = async () => {
@@ -81,6 +91,18 @@ const App = () => {
     }
   };
 
+  const fetchPlacedBets = async () => {
+    if (!token) return;
+    try {
+      const response = await axios.get(`${API}/bets`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPlacedBets(response.data);
+    } catch (error) {
+      console.error('Error fetching placed bets:', error);
+    }
+  };
+
   const logActivity = async (action, details) => {
     if (!token) return;
     try {
@@ -106,6 +128,9 @@ const App = () => {
       setShowLoginModal(false);
       
       await logActivity('user_login', { email, login_time: new Date().toISOString() });
+      
+      // Fetch placed bets after login
+      setTimeout(fetchPlacedBets, 1000);
       
       return { success: true };
     } catch (error) {
@@ -138,6 +163,7 @@ const App = () => {
     setToken(null);
     setUser(null);
     setBetSlipItems([]);
+    setPlacedBets([]);
     logActivity('user_logout', { logout_time: new Date().toISOString() });
   };
 
@@ -206,6 +232,9 @@ const App = () => {
       // Remove bet from slip
       removeBetSlipItem(betItem.id);
 
+      // Refresh placed bets
+      fetchPlacedBets();
+
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Error placing bet:', error);
@@ -238,6 +267,30 @@ const App = () => {
     }
   };
 
+  const handleWithdrawal = async (amount) => {
+    try {
+      const response = await axios.post(`${API}/withdrawal/request`, {
+        amount: amount
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Update user winnings
+      setUser(prevUser => ({
+        ...prevUser,
+        winnings: prevUser.winnings - amount
+      }));
+
+      alert(`Withdrawal request submitted! USDT will be sent to: TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ`);
+      setShowWithdrawalModal(false);
+      
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Withdrawal error:', error);
+      return { success: false, error: error.response?.data?.detail || 'Withdrawal failed' };
+    }
+  };
+
   return (
     <div className="App bg-gray-900 min-h-screen">
       <BrowserRouter>
@@ -252,6 +305,8 @@ const App = () => {
                 onLogout={handleLogout}
                 onShowBettingHistory={() => setShowBettingHistory(true)}
                 onShowActivities={() => setShowActivities(true)}
+                onShowWithdrawal={() => setShowWithdrawalModal(true)}
+                onShowWithdrawalHistory={() => setShowWithdrawalHistory(true)}
               />
               
               {/* Navigation */}
@@ -297,6 +352,7 @@ const App = () => {
                   <div className="w-80 bg-gray-800 border-l border-gray-700">
                     <BetSlip 
                       items={betSlipItems}
+                      placedBets={placedBets}
                       user={user}
                       onRemoveItem={removeBetSlipItem}
                       onUpdateStake={updateStake}
@@ -336,6 +392,21 @@ const App = () => {
               {showActivities && (
                 <AccountActivities 
                   onClose={() => setShowActivities(false)}
+                  token={token}
+                />
+              )}
+
+              {showWithdrawalModal && (
+                <WithdrawalModal 
+                  onClose={() => setShowWithdrawalModal(false)}
+                  onWithdraw={handleWithdrawal}
+                  user={user}
+                />
+              )}
+
+              {showWithdrawalHistory && (
+                <WithdrawalHistory 
+                  onClose={() => setShowWithdrawalHistory(false)}
                   token={token}
                 />
               )}
