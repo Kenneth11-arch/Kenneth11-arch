@@ -359,6 +359,9 @@ const App = () => {
                     sports={sportsData.sportsCategories}
                     selectedSport={selectedSport}
                     onSelectSport={setSelectedSport}
+                    allSportsData={sportsData.allSportsData}
+                    liveMatches={sportsData.liveMatches}
+                    upcomingMatches={sportsData.upcomingMatches}
                   />
                 </div>
                 
