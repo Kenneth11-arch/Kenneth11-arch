@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Header Component
-const Header = ({ user, onLoginClick, onRegisterClick, onLogout, onShowBettingHistory, onShowActivities, onShowWithdrawal, onShowWithdrawalHistory }) => {
+const Header = ({ user, onLoginClick, onRegisterClick, onLogout, onShowBettingHistory, onShowActivities, onShowDeposit, onShowWithdrawal, onShowSettledBets, onShowMatchSettlements }) => {
   return (
     <header className="bg-green-600 text-white p-4">
       <div className="container mx-auto flex justify-between items-center">
@@ -14,6 +14,7 @@ const Header = ({ user, onLoginClick, onRegisterClick, onLogout, onShowBettingHi
           <div className="text-sm">
             <span className="bg-yellow-400 text-black px-2 py-1 rounded">LIVE</span>
           </div>
+          <div className="text-xs bg-red-600 px-2 py-1 rounded">REAL MONEY ONLY</div>
         </div>
         
         <div className="flex items-center space-x-4">
@@ -22,21 +23,21 @@ const Header = ({ user, onLoginClick, onRegisterClick, onLogout, onShowBettingHi
               <div className="text-sm">
                 <span>Welcome, {user.name}</span>
                 {user.is_special_account && (
-                  <span className="ml-2 bg-yellow-400 text-black px-2 py-1 rounded text-xs">SPECIAL</span>
+                  <span className="ml-2 bg-yellow-400 text-black px-2 py-1 rounded text-xs">ADMIN</span>
                 )}
               </div>
               <div className="flex space-x-2">
                 <div className="bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                  Balance: ${user.balance.toFixed(2)}
-                </div>
-                <div className="bg-yellow-400 text-black px-3 py-1 rounded text-sm">
-                  Free Bets: ${user.free_bets.toFixed(2)}
-                </div>
-                <div className="bg-green-700 text-white px-3 py-1 rounded text-sm">
-                  Winnings: ${user.winnings ? user.winnings.toFixed(2) : '0.00'}
+                  USDT Balance: ${user.balance ? user.balance.toFixed(2) : '0.00'}
                 </div>
               </div>
               <div className="flex space-x-1">
+                <button
+                  onClick={onShowDeposit}
+                  className="bg-green-700 text-white px-2 py-1 rounded text-xs hover:bg-green-800"
+                >
+                  Deposit
+                </button>
                 <button
                   onClick={onShowBettingHistory}
                   className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
@@ -44,22 +45,30 @@ const Header = ({ user, onLoginClick, onRegisterClick, onLogout, onShowBettingHi
                   My Bets
                 </button>
                 <button
-                  onClick={onShowActivities}
+                  onClick={onShowSettledBets}
                   className="bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700"
                 >
-                  Activities
+                  Settled Bets
                 </button>
                 <button
                   onClick={onShowWithdrawal}
                   className="bg-orange-600 text-white px-2 py-1 rounded text-xs hover:bg-orange-700"
                 >
-                  Withdraw USDT
+                  Withdraw
                 </button>
+                {user.is_special_account && (
+                  <button
+                    onClick={onShowMatchSettlements}
+                    className="bg-yellow-600 text-black px-2 py-1 rounded text-xs hover:bg-yellow-700"
+                  >
+                    Settlements
+                  </button>
+                )}
                 <button
-                  onClick={onShowWithdrawalHistory}
+                  onClick={onShowActivities}
                   className="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700"
                 >
-                  Withdrawals
+                  Activities
                 </button>
                 <button
                   onClick={onLogout}
@@ -129,14 +138,14 @@ const HeroSection = () => {
       >
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
         <div className="relative z-10">
-          <h1 className="text-4xl font-bold mb-4">Welcome to bet365</h1>
-          <p className="text-xl mb-6">Join millions of customers worldwide and bet on your favorite sports with unlimited free bets!</p>
+          <h1 className="text-4xl font-bold mb-4">Real Money Betting Platform</h1>
+          <p className="text-xl mb-6">Legitimate USDT deposits and withdrawals • No fake money • Real settlements</p>
           <div className="flex space-x-4">
             <button className="bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500">
-              Join Now
+              Deposit USDT
             </button>
             <button className="border border-white px-6 py-3 rounded-lg hover:bg-white hover:text-green-600">
-              Learn More
+              View Settlements
             </button>
           </div>
         </div>
@@ -155,7 +164,7 @@ const SportsMenu = ({ sports, selectedSport, onSelectSport, allSportsData, liveM
   };
   
   const getTotalMatches = () => {
-    return liveMatches.length + upcomingMatches.length;
+    return (liveMatches ? liveMatches.length : 0) + (upcomingMatches ? upcomingMatches.length : 0);
   };
   
   return (
@@ -204,14 +213,14 @@ const SportsMenu = ({ sports, selectedSport, onSelectSport, allSportsData, liveM
           <span className="text-white text-sm font-semibold">LIVE NOW</span>
         </div>
         <div className="text-red-200 text-xs mt-1">
-          {liveMatches.length} live matches
+          {liveMatches ? liveMatches.length : 0} live matches
         </div>
       </div>
       
-      {/* Auto-refresh indicator */}
-      <div className="mt-3 p-2 bg-blue-900 rounded text-center">
-        <div className="text-blue-200 text-xs">
-          🔄 Auto-updating every 30s
+      {/* Real money indicator */}
+      <div className="mt-3 p-2 bg-green-900 rounded text-center">
+        <div className="text-green-200 text-xs">
+          💰 Real USDT Only
         </div>
       </div>
     </div>
@@ -220,6 +229,8 @@ const SportsMenu = ({ sports, selectedSport, onSelectSport, allSportsData, liveM
 
 // Live Betting Component
 const LiveBetting = ({ matches, onAddToBetSlip, selectedSport }) => {
+  if (!matches) matches = [];
+  
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <h2 className="text-2xl font-bold text-white mb-4 flex items-center justify-between">
@@ -272,7 +283,7 @@ const LiveBetting = ({ matches, onAddToBetSlip, selectedSport }) => {
                 
                 <div className="flex space-x-2 ml-4">
                   <button
-                    onClick={() => onAddToBetSlip(match, 'home', match.home_odds || match.homeOdds)}
+                    onClick={() => onAddToBetSlip(match, 'home', match.home_odds || match.homeOdds, 'bet365')}
                     className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors transform hover:scale-105"
                   >
                     <div className="text-center">
@@ -282,7 +293,7 @@ const LiveBetting = ({ matches, onAddToBetSlip, selectedSport }) => {
                   </button>
                   {(match.draw_odds || match.drawOdds) && (
                     <button
-                      onClick={() => onAddToBetSlip(match, 'draw', match.draw_odds || match.drawOdds)}
+                      onClick={() => onAddToBetSlip(match, 'draw', match.draw_odds || match.drawOdds, 'bet365')}
                       className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors transform hover:scale-105"
                     >
                       <div className="text-center">
@@ -292,7 +303,7 @@ const LiveBetting = ({ matches, onAddToBetSlip, selectedSport }) => {
                     </button>
                   )}
                   <button
-                    onClick={() => onAddToBetSlip(match, 'away', match.away_odds || match.awayOdds)}
+                    onClick={() => onAddToBetSlip(match, 'away', match.away_odds || match.awayOdds, 'bet365')}
                     className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition-colors transform hover:scale-105"
                   >
                     <div className="text-center">
@@ -300,6 +311,22 @@ const LiveBetting = ({ matches, onAddToBetSlip, selectedSport }) => {
                       <div className="font-bold">{match.away_odds || match.awayOdds}</div>
                     </div>
                   </button>
+                  
+                  {/* Matchbook Lay Betting */}
+                  <div className="flex flex-col space-y-1">
+                    <button
+                      onClick={() => onAddToBetSlip(match, 'home', match.home_odds || match.homeOdds, 'matchbook')}
+                      className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
+                    >
+                      LAY {match.home_team || match.homeTeam}
+                    </button>
+                    <button
+                      onClick={() => onAddToBetSlip(match, 'away', match.away_odds || match.awayOdds, 'matchbook')}
+                      className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
+                    >
+                      LAY {match.away_team || match.awayTeam}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -312,6 +339,8 @@ const LiveBetting = ({ matches, onAddToBetSlip, selectedSport }) => {
 
 // Featured Matches Component
 const FeaturedMatches = ({ matches, onAddToBetSlip, selectedSport }) => {
+  if (!matches) matches = [];
+  
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
       <h2 className="text-2xl font-bold text-white mb-4 flex items-center justify-between">
@@ -376,9 +405,9 @@ const FeaturedMatches = ({ matches, onAddToBetSlip, selectedSport }) => {
                 <div className="text-xs text-gray-400 mb-3">{match.tournament}</div>
               )}
               
-              <div className="flex space-x-1">
+              <div className="flex space-x-1 mb-2">
                 <button
-                  onClick={() => onAddToBetSlip(match, 'home', match.home_odds || match.homeOdds)}
+                  onClick={() => onAddToBetSlip(match, 'home', match.home_odds || match.homeOdds, 'bet365')}
                   className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition-colors text-sm"
                 >
                   <div className="text-center">
@@ -388,7 +417,7 @@ const FeaturedMatches = ({ matches, onAddToBetSlip, selectedSport }) => {
                 </button>
                 {(match.draw_odds || match.drawOdds) && (
                   <button
-                    onClick={() => onAddToBetSlip(match, 'draw', match.draw_odds || match.drawOdds)}
+                    onClick={() => onAddToBetSlip(match, 'draw', match.draw_odds || match.drawOdds, 'bet365')}
                     className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition-colors text-sm"
                   >
                     <div className="text-center">
@@ -398,13 +427,29 @@ const FeaturedMatches = ({ matches, onAddToBetSlip, selectedSport }) => {
                   </button>
                 )}
                 <button
-                  onClick={() => onAddToBetSlip(match, 'away', match.away_odds || match.awayOdds)}
+                  onClick={() => onAddToBetSlip(match, 'away', match.away_odds || match.awayOdds, 'bet365')}
                   className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition-colors text-sm"
                 >
                   <div className="text-center">
                     <div className="text-xs">{(match.away_team || match.awayTeam).split(' ').slice(-1)[0]}</div>
                     <div className="font-bold">{match.away_odds || match.awayOdds}</div>
                   </div>
+                </button>
+              </div>
+              
+              {/* Matchbook Lay Options */}
+              <div className="flex space-x-1">
+                <button
+                  onClick={() => onAddToBetSlip(match, 'home', match.home_odds || match.homeOdds, 'matchbook')}
+                  className="flex-1 bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition-colors text-xs"
+                >
+                  LAY {(match.home_team || match.homeTeam).split(' ').slice(-1)[0]}
+                </button>
+                <button
+                  onClick={() => onAddToBetSlip(match, 'away', match.away_odds || match.awayOdds, 'matchbook')}
+                  className="flex-1 bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition-colors text-xs"
+                >
+                  LAY {(match.away_team || match.awayTeam).split(' ').slice(-1)[0]}
                 </button>
               </div>
             </div>
@@ -463,10 +508,10 @@ const PromotionalBanner = () => {
       >
         <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         <div className="relative z-10">
-          <h3 className="text-2xl font-bold mb-2 text-white">Unlimited Free Bets!</h3>
-          <p className="text-lg mb-4 text-white">Every account gets unlimited free bets - start betting now!</p>
+          <h3 className="text-2xl font-bold mb-2 text-white">Real Money Platform</h3>
+          <p className="text-lg mb-4 text-white">Legitimate USDT deposits and withdrawals • No fake money!</p>
           <button className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors">
-            Start Betting
+            Deposit USDT
           </button>
         </div>
       </div>
@@ -478,10 +523,6 @@ const PromotionalBanner = () => {
 const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdateBetType, onPlaceBet, onPlaceAllBets }) => {
   const [activeTab, setActiveTab] = useState('betslip');
   
-  const calculateTotalOdds = () => {
-    return items.reduce((total, item) => total * parseFloat(item.odds), 1).toFixed(2);
-  };
-  
   const calculateTotalStake = () => {
     return items.reduce((total, item) => total + parseFloat(item.stake || 0), 0).toFixed(2);
   };
@@ -490,7 +531,11 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
     return items.reduce((total, item) => {
       const stake = parseFloat(item.stake || 0);
       const odds = parseFloat(item.odds);
-      return total + (stake * odds);
+      if (item.betType === 'back') {
+        return total + (stake * odds);
+      } else { // lay bet
+        return total + stake; // For lay bets, you win the stake if selection loses
+      }
     }, 0).toFixed(2);
   };
   
@@ -502,6 +547,11 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
     
     if (betItem.stake <= 0) {
       alert('Please enter a stake amount');
+      return;
+    }
+    
+    if (user.balance < betItem.stake) {
+      alert('Insufficient balance. Please deposit USDT first.');
       return;
     }
     
@@ -524,7 +574,7 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
               : 'bg-gray-700 text-gray-300'
           }`}
         >
-          Bet Slip ({items.length})
+          Bet Slip ({items ? items.length : 0})
         </button>
         <button
           onClick={() => setActiveTab('mybets')}
@@ -540,10 +590,15 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
       
       {activeTab === 'betslip' && (
         <div>
-          {items.length === 0 ? (
+          {!items || items.length === 0 ? (
             <div className="text-center text-gray-400 py-8">
               <p>Your bet slip is empty</p>
               <p className="text-sm mt-2">Click on odds to add selections</p>
+              <div className="mt-4 p-3 bg-red-900 rounded text-center">
+                <div className="text-red-200 text-xs">
+                  💰 Real USDT bets only
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -555,7 +610,10 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
                         {item.match.homeTeam || item.match.home_team} vs {item.match.awayTeam || item.match.away_team}
                       </div>
                       <div className="text-gray-400 text-xs">
-                        {item.betType} @ {item.odds}
+                        {item.betType === 'back' ? 'BACK' : 'LAY'} {item.selection} @ {item.odds}
+                      </div>
+                      <div className="text-blue-400 text-xs">
+                        Platform: {item.platform || 'bet365'}
                       </div>
                     </div>
                     <button
@@ -568,7 +626,7 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
                   
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <span className="text-white text-sm">Stake:</span>
+                      <span className="text-white text-sm">Stake (USDT):</span>
                       <input
                         type="number"
                         value={item.stake}
@@ -583,12 +641,23 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
                     <div className="flex items-center space-x-2">
                       <label className="flex items-center space-x-2 cursor-pointer">
                         <input
-                          type="checkbox"
-                          checked={item.isFreeBet}
-                          onChange={(e) => onUpdateBetType(item.id, e.target.checked)}
+                          type="radio"
+                          name={`betType_${item.id}`}
+                          checked={item.betType === 'back'}
+                          onChange={() => onUpdateBetType(item.id, 'back')}
                           className="text-green-600"
                         />
-                        <span className="text-yellow-400 text-sm">Use Free Bet</span>
+                        <span className="text-green-400 text-sm">Back Bet</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`betType_${item.id}`}
+                          checked={item.betType === 'lay'}
+                          onChange={() => onUpdateBetType(item.id, 'lay')}
+                          className="text-blue-600"
+                        />
+                        <span className="text-blue-400 text-sm">Lay Bet</span>
                       </label>
                     </div>
                   </div>
@@ -596,7 +665,10 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
                   {item.stake > 0 && (
                     <div className="mt-2">
                       <div className="text-yellow-400 text-sm">
-                        To win: ${(item.stake * item.odds).toFixed(2)}
+                        {item.betType === 'back' 
+                          ? `To win: $${(item.stake * item.odds).toFixed(2)}` 
+                          : `Win if loses: $${item.stake.toFixed(2)}`
+                        }
                       </div>
                       <button
                         onClick={() => placeSingleBet(item)}
@@ -612,12 +684,8 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
               {items.length > 0 && (
                 <div className="bg-gray-700 rounded-lg p-4 mt-4">
                   <div className="flex justify-between text-white mb-2">
-                    <span>Total Stake:</span>
+                    <span>Total Stake (USDT):</span>
                     <span>${calculateTotalStake()}</span>
-                  </div>
-                  <div className="flex justify-between text-white mb-2">
-                    <span>Total Odds:</span>
-                    <span>{calculateTotalOdds()}</span>
                   </div>
                   <div className="flex justify-between text-yellow-400 mb-4">
                     <span>Potential Winnings:</span>
@@ -647,8 +715,7 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
                     {bet.match_description}
                   </div>
                   <div className="text-gray-400 text-xs">
-                    {bet.bet_type} @ {bet.odds} - ${bet.stake}
-                    {bet.is_free_bet && ' (Free Bet)'}
+                    {bet.bet_type.toUpperCase()} {bet.selection} @ {bet.odds} - ${bet.stake} USDT
                   </div>
                   <div className="flex justify-between items-center mt-2">
                     <div className={`text-xs px-2 py-1 rounded ${
@@ -677,7 +744,7 @@ const BetSlip = ({ items, placedBets, user, onRemoveItem, onUpdateStake, onUpdat
   );
 };
 
-// Login Modal Component
+// Login Modal Component  
 const LoginModal = ({ onClose, onLogin }) => {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -748,7 +815,7 @@ const LoginModal = ({ onClose, onLogin }) => {
         </form>
         
         <div className="mt-4 text-center text-gray-400">
-          <p className="text-sm">Special Account for Testing:</p>
+          <p className="text-sm">Admin Account:</p>
           <p className="text-xs">Email: kb4211551@gmail.com</p>
           <p className="text-xs">Password: Kevin666</p>
         </div>
@@ -840,7 +907,207 @@ const RegisterModal = ({ onClose, onRegister }) => {
         </form>
         
         <div className="mt-4 text-center text-gray-400 text-sm">
-          <p>🎉 Every account gets unlimited free bets!</p>
+          <p>🎉 Real money betting platform with USDT!</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Deposit Modal Component
+const DepositModal = ({ onClose, onDeposit, user }) => {
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const handleDeposit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    const depositAmount = parseFloat(amount);
+    
+    if (depositAmount < 10) {
+      setError('Minimum deposit amount is $10 USDT');
+      setLoading(false);
+      return;
+    }
+    
+    const result = await onDeposit(depositAmount);
+    
+    if (!result.success) {
+      setError(result.error);
+    }
+    
+    setLoading(false);
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 rounded-lg p-6 w-96">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-white">Deposit USDT</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            ✕
+          </button>
+        </div>
+        
+        <div className="bg-blue-900 text-blue-200 p-3 rounded mb-4 text-sm">
+          <div className="font-semibold mb-1">💰 Current Balance: ${user?.balance?.toFixed(2) || '0.00'} USDT</div>
+          <div className="text-xs">Minimum deposit: $10 USDT</div>
+        </div>
+        
+        <div className="bg-gray-700 text-gray-300 p-3 rounded mb-4 text-sm">
+          <div className="font-semibold mb-1">🔗 Send USDT to this address:</div>
+          <div className="text-xs font-mono break-all bg-gray-600 p-2 rounded">
+            TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ
+          </div>
+          <div className="text-xs mt-2">Network: TRC-20 (TRON)</div>
+        </div>
+        
+        {error && (
+          <div className="bg-red-600 text-white p-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+        
+        <form onSubmit={handleDeposit}>
+          <div className="mb-4">
+            <label className="block text-white mb-2">Deposit Amount (USDT)</label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full bg-gray-700 text-white px-3 py-2 rounded"
+              placeholder="Enter amount"
+              min="10"
+              step="0.01"
+              required
+              disabled={loading}
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Processing...' : 'Create Deposit Request'}
+          </button>
+        </form>
+        
+        <div className="mt-4 text-center text-gray-400 text-sm">
+          <p>⚡ Send exact amount to the address above</p>
+          <p>Processing time: 1-10 minutes</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Withdrawal Modal Component
+const WithdrawalModal = ({ onClose, onWithdraw, user }) => {
+  const [amount, setAmount] = useState('');
+  const [address, setAddress] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const handleWithdraw = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    const withdrawAmount = parseFloat(amount);
+    
+    if (withdrawAmount < 10) {
+      setError('Minimum withdrawal amount is $10 USDT');
+      setLoading(false);
+      return;
+    }
+    
+    if (withdrawAmount > user.balance) {
+      setError('Insufficient balance');
+      setLoading(false);
+      return;
+    }
+    
+    if (!address) {
+      setError('Please enter USDT address');
+      setLoading(false);
+      return;
+    }
+    
+    const result = await onWithdraw(withdrawAmount, address);
+    
+    if (!result.success) {
+      setError(result.error);
+    }
+    
+    setLoading(false);
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 rounded-lg p-6 w-96">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-white">Withdraw USDT</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            ✕
+          </button>
+        </div>
+        
+        <div className="bg-blue-900 text-blue-200 p-3 rounded mb-4 text-sm">
+          <div className="font-semibold mb-1">💰 Available Balance: ${user?.balance?.toFixed(2) || '0.00'} USDT</div>
+          <div className="text-xs">Minimum withdrawal: $10 USDT</div>
+        </div>
+        
+        {error && (
+          <div className="bg-red-600 text-white p-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+        
+        <form onSubmit={handleWithdraw}>
+          <div className="mb-4">
+            <label className="block text-white mb-2">Withdrawal Amount (USDT)</label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full bg-gray-700 text-white px-3 py-2 rounded"
+              placeholder="Enter amount"
+              min="10"
+              step="0.01"
+              required
+              disabled={loading}
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-white mb-2">USDT Address (TRC-20)</label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full bg-gray-700 text-white px-3 py-2 rounded"
+              placeholder="Enter your USDT address"
+              required
+              disabled={loading}
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={loading || !user?.balance || user.balance < 10}
+            className="w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Processing...' : 'Request Withdrawal'}
+          </button>
+        </form>
+        
+        <div className="mt-4 text-center text-gray-400 text-sm">
+          <p>⚡ Withdrawals processed to USDT (TRC-20)</p>
+          <p>Processing time: 1-24 hours</p>
         </div>
       </div>
     </div>
@@ -893,21 +1160,22 @@ const BettingHistory = ({ onClose, token }) => {
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
                     <div className="text-white font-semibold">{bet.match_description}</div>
-                    <div className="text-gray-400 text-sm">{bet.bet_type} @ {bet.odds}</div>
+                    <div className="text-gray-400 text-sm">
+                      {bet.bet_type.toUpperCase()} {bet.selection} @ {bet.odds} - ${bet.stake} USDT
+                    </div>
+                    <div className="text-blue-400 text-sm">Platform: {bet.bet_platform}</div>
                     <div className="text-sm text-gray-400">
                       {new Date(bet.created_at).toLocaleString()}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-white">
-                      Stake: ${bet.stake} {bet.is_free_bet && '(Free Bet)'}
-                    </div>
                     <div className="text-yellow-400">
                       Potential: ${bet.potential_winnings.toFixed(2)}
                     </div>
-                    <div className={`text-sm ${
-                      bet.status === 'won' ? 'text-green-400' : 
-                      bet.status === 'lost' ? 'text-red-400' : 'text-gray-400'
+                    <div className={`text-sm px-2 py-1 rounded ${
+                      bet.status === 'won' ? 'bg-green-600 text-white' : 
+                      bet.status === 'lost' ? 'bg-red-600 text-white' : 
+                      'bg-yellow-600 text-black'
                     }`}>
                       {bet.status.toUpperCase()}
                     </div>
@@ -987,119 +1255,87 @@ const AccountActivities = ({ onClose, token }) => {
   );
 };
 
-// Withdrawal Modal Component
-const WithdrawalModal = ({ onClose, onWithdraw, user }) => {
-  const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const handleWithdraw = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    
-    const withdrawAmount = parseFloat(amount);
-    
-    if (withdrawAmount < 10) {
-      setError('Minimum withdrawal amount is $10');
-      setLoading(false);
-      return;
-    }
-    
-    if (withdrawAmount > user.winnings) {
-      setError('Insufficient winnings balance');
-      setLoading(false);
-      return;
-    }
-    
-    const result = await onWithdraw(withdrawAmount);
-    
-    if (!result.success) {
-      setError(result.error);
-    }
-    
-    setLoading(false);
-  };
-  
+// Settled Bets Modal Component
+const SettledBetsModal = ({ onClose, settledBets }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg p-6 w-96">
+      <div className="bg-gray-800 rounded-lg p-6 w-4/5 max-w-4xl max-h-4/5 overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-white">Withdraw USDT</h2>
+          <h2 className="text-2xl font-bold text-white">Settled Bets - Wins & Losses</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             ✕
           </button>
         </div>
         
-        <div className="bg-blue-900 text-blue-200 p-3 rounded mb-4 text-sm">
-          <div className="font-semibold mb-1">💰 Available Winnings: ${user.winnings ? user.winnings.toFixed(2) : '0.00'}</div>
-          <div className="text-xs">Only winnings can be withdrawn. Minimum withdrawal: $10</div>
-        </div>
-        
-        <div className="bg-gray-700 text-gray-300 p-3 rounded mb-4 text-sm">
-          <div className="font-semibold mb-1">🔗 USDT Wallet Address:</div>
-          <div className="text-xs font-mono break-all bg-gray-600 p-2 rounded">
-            TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ
+        {!settledBets || settledBets.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">
+            <p>No settled bets yet</p>
+            <p className="text-sm mt-2">Your wins and losses will appear here when matches are settled</p>
           </div>
-        </div>
-        
-        {error && (
-          <div className="bg-red-600 text-white p-3 rounded mb-4">
-            {error}
+        ) : (
+          <div className="space-y-4">
+            {settledBets.map((bet) => (
+              <div key={bet.id} className="bg-gray-700 rounded-lg p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <div className="text-white font-semibold">{bet.match_description}</div>
+                    <div className="text-gray-400 text-sm">
+                      {bet.bet_type.toUpperCase()} {bet.selection} @ {bet.odds} - ${bet.stake} USDT
+                    </div>
+                    <div className="text-blue-400 text-sm">Platform: {bet.bet_platform}</div>
+                    <div className="text-sm text-gray-400">
+                      Settled: {new Date(bet.settled_at).toLocaleString()}
+                    </div>
+                    {bet.settlement_reason && (
+                      <div className="text-sm text-gray-400">
+                        Reason: {bet.settlement_reason}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${
+                      bet.status === 'won' ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {bet.status === 'won' 
+                        ? `+$${bet.potential_winnings.toFixed(2)}` 
+                        : `-$${bet.stake.toFixed(2)}`
+                      }
+                    </div>
+                    <div className={`text-sm px-2 py-1 rounded ${
+                      bet.status === 'won' ? 'bg-green-600 text-white' : 
+                      bet.status === 'lost' ? 'bg-red-600 text-white' : 
+                      'bg-gray-600 text-white'
+                    }`}>
+                      {bet.status.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-        
-        <form onSubmit={handleWithdraw}>
-          <div className="mb-4">
-            <label className="block text-white mb-2">Withdrawal Amount (USD)</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full bg-gray-700 text-white px-3 py-2 rounded"
-              placeholder="Enter amount"
-              min="10"
-              step="0.01"
-              required
-              disabled={loading}
-            />
-          </div>
-          
-          <button
-            type="submit"
-            disabled={loading || !user.winnings || user.winnings < 10}
-            className="w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Processing...' : 'Request Withdrawal'}
-          </button>
-        </form>
-        
-        <div className="mt-4 text-center text-gray-400 text-sm">
-          <p>⚡ Withdrawals are processed to USDT (TRC-20)</p>
-          <p>Processing time: 1-24 hours</p>
-        </div>
       </div>
     </div>
   );
 };
 
-// Withdrawal History Component
-const WithdrawalHistory = ({ onClose, token }) => {
-  const [withdrawals, setWithdrawals] = useState([]);
+// Match Settlements Modal Component (Admin Only)
+const MatchSettlementsModal = ({ onClose, token }) => {
+  const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    fetchWithdrawals();
+    fetchSettlements();
   }, []);
   
-  const fetchWithdrawals = async () => {
+  const fetchSettlements = async () => {
     try {
-      const response = await axios.get(`${API}/withdrawals`, {
+      const response = await axios.get(`${API}/match-settlements`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setWithdrawals(response.data);
+      setSettlements(response.data);
     } catch (error) {
-      console.error('Error fetching withdrawals:', error);
+      console.error('Error fetching settlements:', error);
     } finally {
       setLoading(false);
     }
@@ -1109,7 +1345,7 @@ const WithdrawalHistory = ({ onClose, token }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-gray-800 rounded-lg p-6 w-4/5 max-w-4xl max-h-4/5 overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-white">Withdrawal History</h2>
+          <h2 className="text-2xl font-bold text-white">Match Settlements</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             ✕
           </button>
@@ -1117,40 +1353,29 @@ const WithdrawalHistory = ({ onClose, token }) => {
         
         {loading ? (
           <div className="text-center text-gray-400 py-8">Loading...</div>
-        ) : withdrawals.length === 0 ? (
+        ) : settlements.length === 0 ? (
           <div className="text-center text-gray-400 py-8">
-            <p>No withdrawals yet</p>
-            <p className="text-sm mt-2">Your withdrawal history will appear here</p>
+            <p>No matches settled yet</p>
+            <p className="text-sm mt-2">Match settlements will appear here</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {withdrawals.map((withdrawal) => (
-              <div key={withdrawal.id} className="bg-gray-700 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
+            {settlements.map((settlement) => (
+              <div key={settlement.id} className="bg-gray-700 rounded-lg p-4">
+                <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <div className="text-white font-semibold">
-                      ${withdrawal.amount.toFixed(2)} USDT
+                    <div className="text-white font-semibold">{settlement.match_description}</div>
+                    <div className="text-green-400 text-sm">Result: {settlement.result.replace('_', ' ').toUpperCase()}</div>
+                    <div className="text-gray-400 text-sm">
+                      Settled: {new Date(settlement.settled_at).toLocaleString()}
                     </div>
-                    <div className="text-gray-400 text-sm font-mono">
-                      To: {withdrawal.usdt_address}
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      Requested: {new Date(withdrawal.created_at).toLocaleString()}
-                    </div>
-                    {withdrawal.processed_at && (
-                      <div className="text-sm text-gray-400">
-                        Processed: {new Date(withdrawal.processed_at).toLocaleString()}
-                      </div>
-                    )}
                   </div>
                   <div className="text-right">
-                    <div className={`px-3 py-1 rounded text-sm ${
-                      withdrawal.status === 'completed' ? 'bg-green-600 text-white' :
-                      withdrawal.status === 'processing' ? 'bg-blue-600 text-white' :
-                      withdrawal.status === 'failed' ? 'bg-red-600 text-white' :
-                      'bg-yellow-600 text-black'
-                    }`}>
-                      {withdrawal.status.toUpperCase()}
+                    <div className="text-white">
+                      Bets settled: {settlement.total_bets_settled}
+                    </div>
+                    <div className="text-yellow-400">
+                      Total payouts: ${settlement.total_payouts.toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -1203,8 +1428,8 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-gray-700 mt-8 pt-4 text-center text-sm">
-          <p>&copy; 2025 bet365. All rights reserved.</p>
-          <p className="mt-2 text-yellow-400">🎉 Unlimited Free Bets Available!</p>
+          <p>&copy; 2025 bet365 Clone. All rights reserved.</p>
+          <p className="mt-2 text-yellow-400">💰 Real USDT Betting Platform - No Fake Money</p>
         </div>
       </div>
     </footer>
@@ -1227,8 +1452,10 @@ const Components = {
   RegisterModal,
   BettingHistory,
   AccountActivities,
+  DepositModal,
   WithdrawalModal,
-  WithdrawalHistory
+  SettledBetsModal,
+  MatchSettlementsModal
 };
 
 export default Components;
