@@ -146,7 +146,18 @@ const HeroSection = () => {
 };
 
 // Sports Menu Component
-const SportsMenu = ({ sports, selectedSport, onSelectSport }) => {
+const SportsMenu = ({ sports, selectedSport, onSelectSport, allSportsData, liveMatches, upcomingMatches }) => {
+  
+  // Calculate real match counts for each sport
+  const getMatchCountForSport = (sportName) => {
+    if (!allSportsData || !allSportsData[sportName]) return 0;
+    return allSportsData[sportName].length;
+  };
+  
+  const getTotalMatches = () => {
+    return liveMatches.length + upcomingMatches.length;
+  };
+  
   return (
     <div className="p-4">
       <h3 className="text-white font-semibold mb-4">Sports</h3>
@@ -159,25 +170,49 @@ const SportsMenu = ({ sports, selectedSport, onSelectSport }) => {
               : 'text-gray-300 hover:bg-gray-700'
           }`}
         >
-          All Sports
+          <div className="flex justify-between items-center">
+            <span>All Sports</span>
+            <span className="text-sm text-gray-400">{getTotalMatches()}</span>
+          </div>
         </button>
-        {sports.map((sport, index) => (
-          <button
-            key={index}
-            onClick={() => onSelectSport(sport.name)}
-            className={`w-full text-left px-3 py-2 rounded transition-colors flex justify-between items-center ${
-              selectedSport === sport.name 
-                ? 'bg-green-600 text-white' 
-                : 'text-gray-300 hover:bg-gray-700'
-            }`}
-          >
-            <span className="flex items-center space-x-2">
-              <span>{sport.icon}</span>
-              <span>{sport.name}</span>
-            </span>
-            <span className="text-sm text-gray-400">{sport.count}</span>
-          </button>
-        ))}
+        {sports.map((sport, index) => {
+          const matchCount = getMatchCountForSport(sport.name);
+          return (
+            <button
+              key={index}
+              onClick={() => onSelectSport(sport.name)}
+              className={`w-full text-left px-3 py-2 rounded transition-colors flex justify-between items-center ${
+                selectedSport === sport.name 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              <span className="flex items-center space-x-2">
+                <span>{sport.icon}</span>
+                <span>{sport.name}</span>
+              </span>
+              <span className="text-sm text-gray-400">{matchCount}</span>
+            </button>
+          );
+        })}
+      </div>
+      
+      {/* Live indicator */}
+      <div className="mt-6 p-3 bg-red-900 rounded-lg">
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          <span className="text-white text-sm font-semibold">LIVE NOW</span>
+        </div>
+        <div className="text-red-200 text-xs mt-1">
+          {liveMatches.length} live matches
+        </div>
+      </div>
+      
+      {/* Auto-refresh indicator */}
+      <div className="mt-3 p-2 bg-blue-900 rounded text-center">
+        <div className="text-blue-200 text-xs">
+          🔄 Auto-updating every 30s
+        </div>
       </div>
     </div>
   );
