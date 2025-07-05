@@ -9,6 +9,9 @@ from datetime import datetime
 BACKEND_URL = "https://fc8c002c-2e63-424b-a18a-54265260fd7d.preview.emergentagent.com"
 API_URL = f"{BACKEND_URL}/api"
 
+# USDT Wallet Address for testing
+USDT_WALLET_ADDRESS = "TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ"
+
 class Bet365CloneBackendTest(unittest.TestCase):
     def setUp(self):
         # Generate a unique email for testing
@@ -29,6 +32,9 @@ class Bet365CloneBackendTest(unittest.TestCase):
         
         # For storing bet data
         self.placed_bet_id = None
+        
+        # For storing withdrawal data
+        self.withdrawal_id = None
 
     def test_01_register_new_user(self):
         """Test registration of a new user"""
