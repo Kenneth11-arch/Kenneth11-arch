@@ -42,7 +42,7 @@ USDT_WALLET_ADDRESS = "TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ"
 # Security
 security = HTTPBearer()
 
-# Models
+# Enhanced Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: EmailStr
@@ -56,6 +56,11 @@ class User(BaseModel):
     total_withdrawn: float = 0.0
     total_won: float = 0.0
     total_lost: float = 0.0
+    total_bets_placed: int = 0
+    win_rate: float = 0.0
+    profit_loss: float = 0.0
+    risk_level: str = "low"  # low, medium, high
+    betting_limit: float = 1000.0
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -76,6 +81,11 @@ class UserResponse(BaseModel):
     total_withdrawn: float
     total_won: float
     total_lost: float
+    total_bets_placed: int
+    win_rate: float
+    profit_loss: float
+    risk_level: str
+    betting_limit: float
 
 class Bet(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -93,6 +103,7 @@ class Bet(BaseModel):
     settled_at: Optional[datetime] = None
     settlement_reason: Optional[str] = None
     actual_result: Optional[str] = None
+    payout_amount: float = 0.0
 
 class BetCreate(BaseModel):
     match_id: str
@@ -112,6 +123,7 @@ class Deposit(BaseModel):
     status: str = "pending"  # pending, confirmed, failed
     created_at: datetime = Field(default_factory=datetime.utcnow)
     confirmed_at: Optional[datetime] = None
+    confirmed_by: Optional[str] = None
 
 class DepositCreate(BaseModel):
     amount: float
@@ -120,11 +132,13 @@ class Withdrawal(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
     amount: float
-    usdt_address: str = USDT_WALLET_ADDRESS
+    usdt_address: str
     transaction_hash: Optional[str] = None
     status: str = "pending"  # pending, processing, completed, failed
     created_at: datetime = Field(default_factory=datetime.utcnow)
     processed_at: Optional[datetime] = None
+    processed_by: Optional[str] = None
+    fees: float = 0.0
 
 class WithdrawalCreate(BaseModel):
     amount: float
@@ -136,8 +150,10 @@ class MatchSettlement(BaseModel):
     match_description: str
     result: str  # home_win, away_win, draw
     settled_at: datetime = Field(default_factory=datetime.utcnow)
+    settled_by: str
     total_bets_settled: int = 0
     total_payouts: float = 0.0
+    profit_loss: float = 0.0
 
 class Activity(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -145,10 +161,23 @@ class Activity(BaseModel):
     action: str
     details: Dict[str, Any]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
 
 class ActivityCreate(BaseModel):
     action: str
     details: Dict[str, Any]
+
+class AdminStats(BaseModel):
+    total_users: int
+    total_deposits: float
+    total_withdrawals: float
+    total_bets: int
+    total_payouts: float
+    platform_profit: float
+    pending_deposits: int
+    pending_withdrawals: int
+    active_matches: int
 
 # Helper functions
 def hash_password(password: str) -> str:
@@ -196,6 +225,41 @@ async def log_activity(user_id: str, action: str, details: Dict[str, Any]):
     activity = Activity(user_id=user_id, action=action, details=details)
     await db.activities.insert_one(activity.dict())
 
+async def update_user_stats(user_id: str):
+    """Update user statistics after bet settlement"""
+    user_bets = await db.bets.find({"user_id": user_id}).to_list(1000)
+    
+    total_bets = len(user_bets)
+    won_bets = len([b for b in user_bets if b.get('status') == 'won'])
+    lost_bets = len([b for b in user_bets if b.get('status') == 'lost'])
+    
+    win_rate = (won_bets / total_bets * 100) if total_bets > 0 else 0
+    
+    total_wagered = sum([b.get('stake', 0) for b in user_bets])
+    total_won = sum([b.get('payout_amount', 0) for b in user_bets if b.get('status') == 'won'])
+    total_lost = sum([b.get('stake', 0) for b in user_bets if b.get('status') == 'lost'])
+    
+    profit_loss = total_won - total_lost
+    
+    # Determine risk level based on betting patterns
+    risk_level = "low"
+    if total_wagered > 1000:
+        risk_level = "medium"
+    if total_wagered > 5000 or (total_bets > 0 and sum([b.get('stake', 0) for b in user_bets[-10:]]) / min(10, total_bets) > 100):
+        risk_level = "high"
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "total_bets_placed": total_bets,
+            "win_rate": round(win_rate, 2),
+            "profit_loss": round(profit_loss, 2),
+            "risk_level": risk_level,
+            "total_won": total_won,
+            "total_lost": total_lost
+        }}
+    )
+
 def generate_realistic_odds():
     """Generate realistic betting odds"""
     home_odds = round(random.uniform(1.20, 4.50), 2)
@@ -203,8 +267,18 @@ def generate_realistic_odds():
     draw_odds = round(random.uniform(2.80, 4.20), 2) if random.choice([True, False]) else None
     return home_odds, away_odds, draw_odds
 
+async def get_live_odds_updates():
+    """Simulate live odds updates for more realism"""
+    # In a real system, this would connect to odds providers
+    return {
+        "odds_updated": True,
+        "timestamp": datetime.utcnow().isoformat(),
+        "changes": random.randint(1, 5)
+    }
+
+# Enhanced sports data fetching (keeping previous functions but adding auto-settlement)
 async def fetch_real_nfl_data():
-    """Fetch real NFL data from ESPN API"""
+    """Fetch real NFL data from ESPN API with settlement detection"""
     try:
         response = requests.get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard", timeout=10)
         if response.status_code == 200:
@@ -223,8 +297,8 @@ async def fetch_real_nfl_data():
                             away_team = competitors[1]['team']['displayName']
                             
                             # Get current score
-                            home_score = competitors[0].get('score', '0')
-                            away_score = competitors[1].get('score', '0')
+                            home_score = int(competitors[0].get('score', '0'))
+                            away_score = int(competitors[1].get('score', '0'))
                             
                             # Get game status
                             status = competition.get('status', {})
@@ -232,8 +306,18 @@ async def fetch_real_nfl_data():
                             clock = status.get('displayClock', '')
                             period = status.get('period', 0)
                             
-                            # Generate realistic odds
+                            # Generate realistic odds with live updates
                             home_odds, away_odds, draw_odds = generate_realistic_odds()
+                            
+                            # Determine result for completed games
+                            result = None
+                            if game_status in ['Final', 'Completed']:
+                                if home_score > away_score:
+                                    result = "home_win"
+                                elif away_score > home_score:
+                                    result = "away_win"
+                                else:
+                                    result = "draw"
                             
                             match = {
                                 "id": f"nfl_{event['id']}",
@@ -248,20 +332,23 @@ async def fetch_real_nfl_data():
                                 "is_live": game_status in ['In Progress', 'Halftime'],
                                 "start_time": event.get('date', ''),
                                 "status": game_status,
-                                "can_settle": game_status in ['Final', 'Completed']
+                                "can_settle": game_status in ['Final', 'Completed'],
+                                "auto_settlement_result": result,
+                                "home_score": home_score,
+                                "away_score": away_score
                             }
                             matches.append(match)
                 except Exception as e:
                     print(f"Error processing NFL event: {e}")
                     continue
                     
-            return matches[:5]  # Return top 5 matches
+            return matches[:5]
     except Exception as e:
         print(f"Error fetching NFL data: {e}")
         return []
 
 async def fetch_real_nba_data():
-    """Fetch real NBA data from ESPN API"""
+    """Fetch real NBA data from ESPN API with settlement detection"""
     try:
         response = requests.get("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard", timeout=10)
         if response.status_code == 200:
@@ -280,8 +367,8 @@ async def fetch_real_nba_data():
                             away_team = competitors[1]['team']['displayName']
                             
                             # Get current score
-                            home_score = competitors[0].get('score', '0')
-                            away_score = competitors[1].get('score', '0')
+                            home_score = int(competitors[0].get('score', '0'))
+                            away_score = int(competitors[1].get('score', '0'))
                             
                             # Get game status
                             status = competition.get('status', {})
@@ -291,6 +378,14 @@ async def fetch_real_nba_data():
                             
                             # Generate realistic odds
                             home_odds, away_odds, draw_odds = generate_realistic_odds()
+                            
+                            # Determine result for completed games
+                            result = None
+                            if game_status in ['Final', 'Completed']:
+                                if home_score > away_score:
+                                    result = "home_win"
+                                elif away_score > home_score:
+                                    result = "away_win"
                             
                             match = {
                                 "id": f"nba_{event['id']}",
@@ -305,28 +400,25 @@ async def fetch_real_nba_data():
                                 "is_live": game_status in ['In Progress', 'Halftime'],
                                 "start_time": event.get('date', ''),
                                 "status": game_status,
-                                "can_settle": game_status in ['Final', 'Completed']
+                                "can_settle": game_status in ['Final', 'Completed'],
+                                "auto_settlement_result": result,
+                                "home_score": home_score,
+                                "away_score": away_score
                             }
                             matches.append(match)
                 except Exception as e:
                     print(f"Error processing NBA event: {e}")
                     continue
                     
-            return matches[:5]  # Return top 5 matches
+            return matches[:5]
     except Exception as e:
         print(f"Error fetching NBA data: {e}")
         return []
 
 async def fetch_real_soccer_data():
-    """Fetch real soccer data from ESPN API"""
+    """Fetch real soccer data from ESPN API with settlement detection"""
     try:
-        # Try multiple soccer leagues
-        leagues = [
-            "eng.1",  # Premier League
-            "esp.1",  # La Liga
-            "usa.1",  # MLS
-        ]
-        
+        leagues = ["eng.1", "esp.1", "usa.1"]
         all_matches = []
         
         for league in leagues:
@@ -347,8 +439,8 @@ async def fetch_real_soccer_data():
                                     away_team = competitors[1]['team']['displayName']
                                     
                                     # Get current score
-                                    home_score = competitors[0].get('score', '0')
-                                    away_score = competitors[1].get('score', '0')
+                                    home_score = int(competitors[0].get('score', '0'))
+                                    away_score = int(competitors[1].get('score', '0'))
                                     
                                     # Get game status
                                     status = competition.get('status', {})
@@ -357,6 +449,16 @@ async def fetch_real_soccer_data():
                                     
                                     # Generate realistic odds
                                     home_odds, away_odds, draw_odds = generate_realistic_odds()
+                                    
+                                    # Determine result for completed games
+                                    result = None
+                                    if game_status in ['Final', 'Completed']:
+                                        if home_score > away_score:
+                                            result = "home_win"
+                                        elif away_score > home_score:
+                                            result = "away_win"
+                                        else:
+                                            result = "draw"
                                     
                                     match = {
                                         "id": f"soccer_{event['id']}",
@@ -371,7 +473,10 @@ async def fetch_real_soccer_data():
                                         "is_live": game_status in ['In Progress', 'Halftime'],
                                         "start_time": event.get('date', ''),
                                         "status": game_status,
-                                        "can_settle": game_status in ['Final', 'Completed']
+                                        "can_settle": game_status in ['Final', 'Completed'],
+                                        "auto_settlement_result": result,
+                                        "home_score": home_score,
+                                        "away_score": away_score
                                     }
                                     all_matches.append(match)
                         except Exception as e:
@@ -381,7 +486,7 @@ async def fetch_real_soccer_data():
                 print(f"Error fetching soccer league {league}: {e}")
                 continue
                 
-        return all_matches[:6]  # Return top 6 matches
+        return all_matches[:6]
     except Exception as e:
         print(f"Error fetching soccer data: {e}")
         return []
@@ -412,6 +517,11 @@ async def fetch_mock_tennis_data():
         is_live = random.choice([True, False])
         is_completed = random.choice([True, False]) if not is_live else False
         
+        # Determine result for completed matches
+        result = None
+        if is_completed:
+            result = "home_win" if random.choice([True, False]) else "away_win"
+        
         match = {
             "id": f"tennis_{i+1}",
             "sport": "Tennis",
@@ -425,14 +535,15 @@ async def fetch_mock_tennis_data():
             "is_live": is_live,
             "start_time": datetime.now().isoformat(),
             "tournament": random.choice(tournaments),
-            "can_settle": is_completed
+            "can_settle": is_completed,
+            "auto_settlement_result": result
         }
         matches.append(match)
     
     return matches
 
 async def fetch_live_sports_data():
-    """Fetch comprehensive real sports data"""
+    """Fetch comprehensive real sports data with auto-settlement capabilities"""
     try:
         # Fetch real data concurrently
         nfl_matches = await fetch_real_nfl_data()
@@ -461,31 +572,27 @@ async def fetch_live_sports_data():
                 "Basketball": [m for m in all_matches if m['sport'] == 'Basketball'],
                 "Tennis": [m for m in all_matches if m['sport'] == 'Tennis'],
                 "American Football": [m for m in all_matches if m['sport'] == 'American Football']
-            }
+            },
+            "auto_settlement_suggestions": [m for m in all_matches if m.get('can_settle', False)]
         }
         
     except Exception as e:
         print(f"Error fetching comprehensive sports data: {e}")
-        # Fallback to mock data
         return {
             "live_matches": [],
             "upcoming_matches": [],
-            "by_sport": {
-                "Football": [],
-                "Basketball": [],
-                "Tennis": [],
-                "American Football": []
-            }
+            "by_sport": {},
+            "auto_settlement_suggestions": []
         }
 
 # Routes
 @api_router.get("/")
 async def root():
-    return {"message": "Legitimate Bet365 Clone API with Real USDT & Matchbook Integration"}
+    return {"message": "Professional Bet365 Clone API - Real Money Platform v2.0"}
 
+# User management routes (keeping existing but enhanced)
 @api_router.post("/register")
 async def register(user_data: UserCreate):
-    # Check if user already exists
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
         raise HTTPException(
@@ -493,30 +600,24 @@ async def register(user_data: UserCreate):
             detail="Email already registered"
         )
     
-    # Create new user with NO FAKE MONEY
     password_hash = hash_password(user_data.password)
-    
-    # Check if this is the special account
     is_special = user_data.email == "kb4211551@gmail.com"
     
     user = User(
         email=user_data.email,
         password_hash=password_hash,
         name=user_data.name,
-        balance=0.0,  # Start with ZERO balance - real money only
+        balance=0.0,
         is_special_account=is_special
     )
     
     await db.users.insert_one(user.dict())
-    
-    # Log registration activity
     await log_activity(user.id, "user_registered", {
         "email": user.email,
         "name": user.name,
         "is_special_account": is_special
     })
     
-    # Create access token
     access_token = create_access_token(data={"sub": user.id})
     
     return {
@@ -536,19 +637,16 @@ async def login(user_data: UserLogin):
     
     user_obj = User(**user)
     
-    # Update last login
     await db.users.update_one(
         {"id": user_obj.id},
         {"$set": {"last_login": datetime.utcnow()}}
     )
     
-    # Log login activity
     await log_activity(user_obj.id, "user_login", {
         "email": user_obj.email,
         "login_time": datetime.utcnow().isoformat()
     })
     
-    # Create access token
     access_token = create_access_token(data={"sub": user_obj.id})
     
     return {
@@ -561,26 +659,22 @@ async def login(user_data: UserLogin):
 async def get_user_profile(current_user: User = Depends(get_current_user)):
     return UserResponse(**current_user.dict())
 
+# Enhanced deposit system
 @api_router.post("/deposit/request")
 async def request_deposit(deposit_data: DepositCreate, current_user: User = Depends(get_current_user)):
-    """Request USDT deposit - generates wallet address for user to send to"""
-    
     if deposit_data.amount < 10.0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Minimum deposit amount is $10 USDT"
         )
     
-    # Create deposit request
     deposit = Deposit(
         user_id=current_user.id,
         amount=deposit_data.amount,
-        usdt_address=USDT_WALLET_ADDRESS  # Your wallet where users send USDT
+        usdt_address=USDT_WALLET_ADDRESS
     )
     
     await db.deposits.insert_one(deposit.dict())
-    
-    # Log deposit request
     await log_activity(current_user.id, "deposit_requested", {
         "deposit_id": deposit.id,
         "amount": deposit_data.amount,
@@ -599,12 +693,10 @@ async def request_deposit(deposit_data: DepositCreate, current_user: User = Depe
 
 @api_router.post("/deposit/{deposit_id}/confirm")
 async def confirm_deposit(deposit_id: str, transaction_hash: str, current_user: User = Depends(get_current_user)):
-    """Confirm deposit with transaction hash (special account only)"""
-    
     if not current_user.is_special_account:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only special accounts can confirm deposits"
+            detail="Only admin accounts can confirm deposits"
         )
     
     deposit = await db.deposits.find_one({"id": deposit_id})
@@ -614,17 +706,16 @@ async def confirm_deposit(deposit_id: str, transaction_hash: str, current_user: 
             detail="Deposit not found"
         )
     
-    # Update deposit as confirmed
     await db.deposits.update_one(
         {"id": deposit_id},
         {"$set": {
             "status": "confirmed",
             "transaction_hash": transaction_hash,
-            "confirmed_at": datetime.utcnow()
+            "confirmed_at": datetime.utcnow(),
+            "confirmed_by": current_user.id
         }}
     )
     
-    # Add funds to user balance
     await db.users.update_one(
         {"id": deposit["user_id"]},
         {"$inc": {
@@ -633,11 +724,11 @@ async def confirm_deposit(deposit_id: str, transaction_hash: str, current_user: 
         }}
     )
     
-    # Log deposit confirmation
     await log_activity(current_user.id, "deposit_confirmed", {
         "deposit_id": deposit_id,
         "amount": deposit["amount"],
-        "transaction_hash": transaction_hash
+        "transaction_hash": transaction_hash,
+        "user_id": deposit["user_id"]
     })
     
     return {
@@ -646,22 +737,27 @@ async def confirm_deposit(deposit_id: str, transaction_hash: str, current_user: 
         "transaction_hash": transaction_hash
     }
 
+# Enhanced betting system
 @api_router.post("/bet/place")
 async def place_bet(bet_data: BetCreate, current_user: User = Depends(get_current_user)):
-    # Calculate potential winnings
+    # Check betting limits
+    if bet_data.stake > current_user.betting_limit:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Stake exceeds betting limit of ${current_user.betting_limit}"
+        )
+    
     if bet_data.bet_type == "back":
         potential_winnings = bet_data.stake * bet_data.odds
     else:  # lay bet
-        potential_winnings = bet_data.stake  # For lay bets, you win the stake if selection loses
+        potential_winnings = bet_data.stake
     
-    # Check if user has enough balance (NO FREE BETS)
     if current_user.balance < bet_data.stake:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Insufficient balance. Available: ${current_user.balance:.2f}"
         )
     
-    # Create bet
     bet = Bet(
         user_id=current_user.id,
         match_id=bet_data.match_id,
@@ -676,13 +772,11 @@ async def place_bet(bet_data: BetCreate, current_user: User = Depends(get_curren
     
     await db.bets.insert_one(bet.dict())
     
-    # Deduct stake from user balance
     await db.users.update_one(
         {"id": current_user.id},
         {"$inc": {"balance": -bet_data.stake}}
     )
     
-    # Log bet placement activity
     await log_activity(current_user.id, "bet_placed", {
         "bet_id": bet.id,
         "match_description": bet_data.match_description,
@@ -707,7 +801,6 @@ async def get_user_bets(current_user: User = Depends(get_current_user)):
 
 @api_router.get("/bets/settled")
 async def get_settled_bets(current_user: User = Depends(get_current_user)):
-    """Get user's settled bets with win/loss information"""
     bets = await db.bets.find({
         "user_id": current_user.id,
         "status": {"$in": ["won", "lost", "void"]}
@@ -715,18 +808,17 @@ async def get_settled_bets(current_user: User = Depends(get_current_user)):
     
     return [Bet(**bet) for bet in bets]
 
+# Enhanced match settlement with auto-detection
 @api_router.post("/match/{match_id}/settle")
 async def settle_match(
     match_id: str, 
     result: str, 
     current_user: User = Depends(get_current_user)
 ):
-    """Settle a match and all associated bets (special account only)"""
-    
     if not current_user.is_special_account:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only special accounts can settle matches"
+            detail="Only admin accounts can settle matches"
         )
     
     if result not in ["home_win", "away_win", "draw"]:
@@ -735,7 +827,6 @@ async def settle_match(
             detail="Result must be 'home_win', 'away_win', or 'draw'"
         )
     
-    # Find all pending bets for this match
     pending_bets = await db.bets.find({
         "match_id": match_id,
         "status": "pending"
@@ -748,29 +839,27 @@ async def settle_match(
         )
     
     total_payouts = 0.0
+    total_stakes = 0.0
     bets_settled = 0
     
-    # Process each bet
     for bet_doc in pending_bets:
         bet = Bet(**bet_doc)
-        bet_status = "lost"  # Default to lost
+        bet_status = "lost"
         payout = 0.0
         
         # Determine if bet won
         if bet.bet_type == "back":
-            # Back bet wins if selection matches result
             if (bet.selection == "home" and result == "home_win") or \
                (bet.selection == "away" and result == "away_win") or \
                (bet.selection == "draw" and result == "draw"):
                 bet_status = "won"
                 payout = bet.potential_winnings
         else:  # lay bet
-            # Lay bet wins if selection DOESN'T match result
             if not ((bet.selection == "home" and result == "home_win") or \
                    (bet.selection == "away" and result == "away_win") or \
                    (bet.selection == "draw" and result == "draw")):
                 bet_status = "won"
-                payout = bet.stake  # For lay bets, you win the stake
+                payout = bet.stake
         
         # Update bet status
         await db.bets.update_one(
@@ -779,30 +868,25 @@ async def settle_match(
                 "status": bet_status,
                 "settled_at": datetime.utcnow(),
                 "actual_result": result,
-                "settlement_reason": f"Match settled: {result}"
+                "settlement_reason": f"Match settled: {result}",
+                "payout_amount": payout
             }}
         )
         
-        # If bet won, add winnings to user balance
+        # Process payouts and update user stats
         if bet_status == "won" and payout > 0:
             await db.users.update_one(
                 {"id": bet.user_id},
-                {"$inc": {
-                    "balance": payout,
-                    "total_won": payout
-                }}
+                {"$inc": {"balance": payout}}
             )
             total_payouts += payout
-        else:
-            # Track losses
-            await db.users.update_one(
-                {"id": bet.user_id},
-                {"$inc": {"total_lost": bet.stake}}
-            )
         
+        total_stakes += bet.stake
         bets_settled += 1
         
-        # Log bet settlement for each user
+        # Update user statistics
+        await update_user_stats(bet.user_id)
+        
         await log_activity(bet.user_id, "bet_settled", {
             "bet_id": bet.id,
             "match_id": match_id,
@@ -811,23 +895,28 @@ async def settle_match(
             "match_result": result
         })
     
-    # Create match settlement record
+    # Calculate platform profit/loss
+    platform_profit = total_stakes - total_payouts
+    
+    # Create enhanced settlement record
     settlement = MatchSettlement(
         match_id=match_id,
         match_description=pending_bets[0]["match_description"],
         result=result,
+        settled_by=current_user.id,
         total_bets_settled=bets_settled,
-        total_payouts=total_payouts
+        total_payouts=total_payouts,
+        profit_loss=platform_profit
     )
     
     await db.match_settlements.insert_one(settlement.dict())
     
-    # Log match settlement
     await log_activity(current_user.id, "match_settled", {
         "match_id": match_id,
         "result": result,
         "bets_settled": bets_settled,
-        "total_payouts": total_payouts
+        "total_payouts": total_payouts,
+        "platform_profit": platform_profit
     })
     
     return {
@@ -836,46 +925,48 @@ async def settle_match(
         "result": result,
         "bets_settled": bets_settled,
         "total_payouts": total_payouts,
+        "platform_profit": platform_profit,
         "settled_at": datetime.utcnow().isoformat()
     }
 
+# Enhanced withdrawal system
 @api_router.post("/withdrawal/request")
 async def request_withdrawal(withdrawal_data: WithdrawalCreate, current_user: User = Depends(get_current_user)):
-    """Request USDT withdrawal"""
-    
-    # Check if user has sufficient balance
     if current_user.balance < withdrawal_data.amount:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Insufficient balance. Available: ${current_user.balance:.2f}"
         )
     
-    # Minimum withdrawal amount
     if withdrawal_data.amount < 10.0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Minimum withdrawal amount is $10 USDT"
         )
     
-    # Create withdrawal request
+    # Calculate withdrawal fees (1% or minimum $2)
+    fees = max(withdrawal_data.amount * 0.01, 2.0)
+    net_amount = withdrawal_data.amount - fees
+    
     withdrawal = Withdrawal(
         user_id=current_user.id,
         amount=withdrawal_data.amount,
-        usdt_address=withdrawal_data.usdt_address
+        usdt_address=withdrawal_data.usdt_address,
+        fees=fees
     )
     
     await db.withdrawals.insert_one(withdrawal.dict())
     
-    # Deduct from user balance
     await db.users.update_one(
         {"id": current_user.id},
         {"$inc": {"balance": -withdrawal_data.amount}}
     )
     
-    # Log withdrawal request
     await log_activity(current_user.id, "withdrawal_requested", {
         "withdrawal_id": withdrawal.id,
         "amount": withdrawal_data.amount,
+        "fees": fees,
+        "net_amount": net_amount,
         "usdt_address": withdrawal_data.usdt_address
     })
     
@@ -883,10 +974,217 @@ async def request_withdrawal(withdrawal_data: WithdrawalCreate, current_user: Us
         "message": "Withdrawal request submitted successfully",
         "withdrawal_id": withdrawal.id,
         "amount": withdrawal_data.amount,
+        "fees": fees,
+        "net_amount": net_amount,
         "usdt_address": withdrawal_data.usdt_address,
         "status": "pending"
     }
 
+@api_router.post("/withdrawal/{withdrawal_id}/process")
+async def process_withdrawal(
+    withdrawal_id: str, 
+    new_status: str, 
+    transaction_hash: str = None,
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.is_special_account:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin accounts can process withdrawals"
+        )
+    
+    if new_status not in ["processing", "completed", "failed"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Status must be 'processing', 'completed', or 'failed'"
+        )
+    
+    withdrawal = await db.withdrawals.find_one({"id": withdrawal_id})
+    if not withdrawal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Withdrawal not found"
+        )
+    
+    update_data = {
+        "status": new_status,
+        "processed_at": datetime.utcnow(),
+        "processed_by": current_user.id
+    }
+    
+    if transaction_hash:
+        update_data["transaction_hash"] = transaction_hash
+    
+    await db.withdrawals.update_one(
+        {"id": withdrawal_id},
+        {"$set": update_data}
+    )
+    
+    # If withdrawal failed, refund the amount
+    if new_status == "failed":
+        await db.users.update_one(
+            {"id": withdrawal["user_id"]},
+            {"$inc": {"balance": withdrawal["amount"]}}
+        )
+    elif new_status == "completed":
+        await db.users.update_one(
+            {"id": withdrawal["user_id"]},
+            {"$inc": {"total_withdrawn": withdrawal["amount"]}}
+        )
+    
+    await log_activity(current_user.id, "withdrawal_processed", {
+        "withdrawal_id": withdrawal_id,
+        "status": new_status,
+        "amount": withdrawal["amount"],
+        "transaction_hash": transaction_hash,
+        "user_id": withdrawal["user_id"]
+    })
+    
+    return {
+        "message": f"Withdrawal {new_status}",
+        "withdrawal_id": withdrawal_id,
+        "status": new_status,
+        "transaction_hash": transaction_hash
+    }
+
+# New Admin Dashboard APIs
+@api_router.get("/admin/stats")
+async def get_admin_stats(current_user: User = Depends(get_current_user)):
+    if not current_user.is_special_account:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin accounts can access admin stats"
+        )
+    
+    # Get comprehensive platform statistics
+    total_users = await db.users.count_documents({})
+    
+    # Financial stats
+    deposit_pipeline = [
+        {"$match": {"status": "confirmed"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]
+    deposit_result = await db.deposits.aggregate(deposit_pipeline).to_list(1)
+    total_deposits = deposit_result[0]["total"] if deposit_result else 0
+    
+    withdrawal_pipeline = [
+        {"$match": {"status": "completed"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]
+    withdrawal_result = await db.withdrawals.aggregate(withdrawal_pipeline).to_list(1)
+    total_withdrawals = withdrawal_result[0]["total"] if withdrawal_result else 0
+    
+    # Betting stats
+    total_bets = await db.bets.count_documents({})
+    
+    payout_pipeline = [
+        {"$match": {"status": "won"}},
+        {"$group": {"_id": None, "total": {"$sum": "$payout_amount"}}}
+    ]
+    payout_result = await db.bets.aggregate(payout_pipeline).to_list(1)
+    total_payouts = payout_result[0]["total"] if payout_result else 0
+    
+    # Platform profit calculation
+    stake_pipeline = [
+        {"$group": {"_id": None, "total": {"$sum": "$stake"}}}
+    ]
+    stake_result = await db.bets.aggregate(stake_pipeline).to_list(1)
+    total_stakes = stake_result[0]["total"] if stake_result else 0
+    platform_profit = total_stakes - total_payouts
+    
+    # Pending items
+    pending_deposits = await db.deposits.count_documents({"status": "pending"})
+    pending_withdrawals = await db.withdrawals.count_documents({"status": "pending"})
+    
+    # Get sports data for active matches
+    sports_data = await fetch_live_sports_data()
+    active_matches = len(sports_data.get("live_matches", []))
+    
+    stats = AdminStats(
+        total_users=total_users,
+        total_deposits=total_deposits,
+        total_withdrawals=total_withdrawals,
+        total_bets=total_bets,
+        total_payouts=total_payouts,
+        platform_profit=platform_profit,
+        pending_deposits=pending_deposits,
+        pending_withdrawals=pending_withdrawals,
+        active_matches=active_matches
+    )
+    
+    return stats
+
+@api_router.get("/admin/pending-deposits")
+async def get_pending_deposits(current_user: User = Depends(get_current_user)):
+    if not current_user.is_special_account:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin accounts can access pending deposits"
+        )
+    
+    deposits = await db.deposits.find({"status": "pending"}).sort("created_at", -1).to_list(100)
+    
+    # Enrich with user data
+    for deposit in deposits:
+        user = await db.users.find_one({"id": deposit["user_id"]})
+        if user:
+            deposit["user_name"] = user["name"]
+            deposit["user_email"] = user["email"]
+    
+    return [Deposit(**deposit) for deposit in deposits]
+
+@api_router.get("/admin/pending-withdrawals")
+async def get_pending_withdrawals(current_user: User = Depends(get_current_user)):
+    if not current_user.is_special_account:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin accounts can access pending withdrawals"
+        )
+    
+    withdrawals = await db.withdrawals.find({"status": "pending"}).sort("created_at", -1).to_list(100)
+    
+    # Enrich with user data
+    for withdrawal in withdrawals:
+        user = await db.users.find_one({"id": withdrawal["user_id"]})
+        if user:
+            withdrawal["user_name"] = user["name"]
+            withdrawal["user_email"] = user["email"]
+    
+    return [Withdrawal(**withdrawal) for withdrawal in withdrawals]
+
+@api_router.get("/admin/auto-settlement-suggestions")
+async def get_auto_settlement_suggestions(current_user: User = Depends(get_current_user)):
+    if not current_user.is_special_account:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin accounts can access settlement suggestions"
+        )
+    
+    sports_data = await fetch_live_sports_data()
+    suggestions = sports_data.get("auto_settlement_suggestions", [])
+    
+    # Add betting information to suggestions
+    for suggestion in suggestions:
+        pending_bets = await db.bets.count_documents({
+            "match_id": suggestion["id"],
+            "status": "pending"
+        })
+        suggestion["pending_bets"] = pending_bets
+    
+    return suggestions
+
+@api_router.get("/admin/users")
+async def get_all_users(current_user: User = Depends(get_current_user)):
+    if not current_user.is_special_account:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin accounts can access user list"
+        )
+    
+    users = await db.users.find({}).sort("created_at", -1).to_list(100)
+    return [UserResponse(**user) for user in users]
+
+# Keep existing routes for activities, sports data, etc.
 @api_router.get("/activities")
 async def get_user_activities(current_user: User = Depends(get_current_user)):
     activities = await db.activities.find({"user_id": current_user.id}).sort("timestamp", -1).to_list(100)
@@ -894,15 +1192,12 @@ async def get_user_activities(current_user: User = Depends(get_current_user)):
 
 @api_router.get("/sports/matches")
 async def get_sports_matches():
-    """Get real live sports matches data with filtering"""
     return await fetch_live_sports_data()
 
 @api_router.get("/sports/matches/{sport}")
 async def get_sports_by_category(sport: str):
-    """Get matches filtered by sport category"""
     sports_data = await fetch_live_sports_data()
     
-    # Normalize sport name
     sport_mapping = {
         "football": "Football",
         "basketball": "Basketball", 
@@ -920,19 +1215,16 @@ async def get_sports_by_category(sport: str):
 
 @api_router.get("/deposits")
 async def get_user_deposits(current_user: User = Depends(get_current_user)):
-    """Get user deposit history"""
     deposits = await db.deposits.find({"user_id": current_user.id}).sort("created_at", -1).to_list(100)
     return [Deposit(**deposit) for deposit in deposits]
 
 @api_router.get("/withdrawals")
 async def get_user_withdrawals(current_user: User = Depends(get_current_user)):
-    """Get user withdrawal history"""
     withdrawals = await db.withdrawals.find({"user_id": current_user.id}).sort("created_at", -1).to_list(100)
     return [Withdrawal(**withdrawal) for withdrawal in withdrawals]
 
 @api_router.get("/match-settlements")
 async def get_match_settlements(current_user: User = Depends(get_current_user)):
-    """Get recent match settlements"""
     settlements = await db.match_settlements.find().sort("settled_at", -1).to_list(50)
     return [MatchSettlement(**settlement) for settlement in settlements]
 
@@ -956,7 +1248,6 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_event():
-    # Initialize special account on startup with ZERO balance
     try:
         existing_user = await db.users.find_one({"email": "kb4211551@gmail.com"})
         if not existing_user:
@@ -964,21 +1255,15 @@ async def startup_event():
             user = User(
                 email="kb4211551@gmail.com",
                 password_hash=password_hash,
-                name="Kevin (Admin Account)",
-                balance=0.0,  # NO FAKE MONEY
-                is_special_account=True
+                name="Kevin (Platform Admin)",
+                balance=0.0,
+                is_special_account=True,
+                betting_limit=100000.0  # High limit for admin
             )
             await db.users.insert_one(user.dict())
-            logger.info("Special account created with ZERO balance - real money only")
-        else:
-            # Remove any fake money from existing account
-            await db.users.update_one(
-                {"email": "kb4211551@gmail.com"},
-                {"$set": {"balance": 0.0}}  # Reset to zero
-            )
-            logger.info("Special account reset to ZERO balance - no fake money")
+            logger.info("Admin account created - Platform ready for real money operations")
     except Exception as e:
-        logger.error(f"Error creating special account: {e}")
+        logger.error(f"Error creating admin account: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
