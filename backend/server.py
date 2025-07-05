@@ -24,6 +24,9 @@ from models import (
 from auth import authenticate_user, create_user, create_access_token, get_current_active_user, get_current_user
 from sports_data import start_sports_data_service, sports_service
 from betting_engine import betting_engine
+from arbitrage import arbitrage_engine
+from ultra_exchange import ultra_exchange
+from user_settings import user_settings_manager
 from database import (
     USERS_COLLECTION, MATCHES_COLLECTION, BETS_COLLECTION, TRANSACTIONS_COLLECTION
 )
