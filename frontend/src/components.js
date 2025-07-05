@@ -1110,7 +1110,9 @@ const Components = {
   LoginModal,
   RegisterModal,
   BettingHistory,
-  AccountActivities
+  AccountActivities,
+  WithdrawalModal,
+  WithdrawalHistory
 };
 
 export default Components;
