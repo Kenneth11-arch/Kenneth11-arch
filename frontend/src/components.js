@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Header Component
-const Header = ({ user, onLoginClick, onRegisterClick, onLogout, onShowBettingHistory, onShowActivities }) => {
+const Header = ({ user, onLoginClick, onRegisterClick, onLogout, onShowBettingHistory, onShowActivities, onShowWithdrawal, onShowWithdrawalHistory }) => {
   return (
     <header className="bg-green-600 text-white p-4">
       <div className="container mx-auto flex justify-between items-center">
@@ -32,23 +32,38 @@ const Header = ({ user, onLoginClick, onRegisterClick, onLogout, onShowBettingHi
                 <div className="bg-yellow-400 text-black px-3 py-1 rounded text-sm">
                   Free Bets: ${user.free_bets.toFixed(2)}
                 </div>
+                <div className="bg-green-700 text-white px-3 py-1 rounded text-sm">
+                  Winnings: ${user.winnings ? user.winnings.toFixed(2) : '0.00'}
+                </div>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex space-x-1">
                 <button
                   onClick={onShowBettingHistory}
-                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                  className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
                 >
                   My Bets
                 </button>
                 <button
                   onClick={onShowActivities}
-                  className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
+                  className="bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700"
                 >
                   Activities
                 </button>
                 <button
+                  onClick={onShowWithdrawal}
+                  className="bg-orange-600 text-white px-2 py-1 rounded text-xs hover:bg-orange-700"
+                >
+                  Withdraw USDT
+                </button>
+                <button
+                  onClick={onShowWithdrawalHistory}
+                  className="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700"
+                >
+                  Withdrawals
+                </button>
+                <button
                   onClick={onLogout}
-                  className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                  className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700"
                 >
                   Logout
                 </button>
