@@ -547,5 +547,34 @@ class Bet365BackendTest(unittest.TestCase):
         print(f"✅ Root endpoint working: {data['message']}")
 
 if __name__ == "__main__":
+    # Create a test suite with specific test order
+    suite = unittest.TestSuite()
+    
+    # Add tests in specific order
+    test_cases = [
+        'test_01_register_regular_user',
+        'test_02_login_regular_user',
+        'test_03_login_vip_user',
+        'test_06_get_sports_list',
+        'test_07_get_matches',
+        'test_08_get_single_match',
+        'test_04_get_profile',
+        'test_05_get_balance',
+        'test_09_place_back_bet',
+        'test_10_place_lay_bet',
+        'test_11_get_user_bets',
+        'test_12_get_betting_stats',
+        'test_13_get_settled_bets',
+        'test_14_get_transactions',
+        'test_15_withdrawal_request',
+        'test_16_check_balance_after_withdrawal',
+        'test_17_check_vip_commission',
+        'test_18_root_endpoint'
+    ]
+    
+    for test_case in test_cases:
+        suite.addTest(Bet365BackendTest(test_case))
+    
     # Run the tests
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)
