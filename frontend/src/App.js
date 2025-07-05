@@ -383,8 +383,10 @@ const App = () => {
                 onLogout={handleLogout}
                 onShowBettingHistory={() => setShowBettingHistory(true)}
                 onShowActivities={() => setShowActivities(true)}
+                onShowDeposit={() => setShowDepositModal(true)}
                 onShowWithdrawal={() => setShowWithdrawalModal(true)}
-                onShowWithdrawalHistory={() => setShowWithdrawalHistory(true)}
+                onShowSettledBets={() => setShowSettledBets(true)}
+                onShowMatchSettlements={() => setShowMatchSettlements(true)}
               />
               
               {/* Navigation */}
