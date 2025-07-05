@@ -224,14 +224,15 @@ const App = () => {
     logActivity('user_logout', { logout_time: new Date().toISOString() });
   };
 
-  const addToBetSlip = (match, betType, odds) => {
+  const addToBetSlip = (match, betType, odds, platform = 'bet365') => {
     const newBet = {
       id: Date.now(),
       match,
-      betType,
+      betType: 'back', // Default to back bet
+      selection: betType, // home, away, draw
       odds,
       stake: 0,
-      isFreeBet: false
+      platform
     };
     setBetSlipItems([...betSlipItems, newBet]);
     
@@ -239,8 +240,9 @@ const App = () => {
     logActivity('bet_added_to_slip', {
       match_id: match.id,
       match_description: `${match.homeTeam || match.home_team} vs ${match.awayTeam || match.away_team}`,
-      bet_type: betType,
-      odds: odds
+      selection: betType,
+      odds: odds,
+      platform: platform
     });
   };
 
@@ -255,9 +257,9 @@ const App = () => {
     ));
   };
 
-  const updateBetType = (id, isFreeBet) => {
+  const updateBetType = (id, betType) => {
     setBetSlipItems(betSlipItems.map(item => 
-      item.id === id ? { ...item, isFreeBet } : item
+      item.id === id ? { ...item, betType } : item
     ));
   };
 
@@ -272,9 +274,10 @@ const App = () => {
         match_id: betItem.match.id,
         match_description: `${betItem.match.homeTeam || betItem.match.home_team} vs ${betItem.match.awayTeam || betItem.match.away_team}`,
         bet_type: betItem.betType,
+        selection: betItem.selection,
         odds: betItem.odds,
         stake: betItem.stake,
-        is_free_bet: betItem.isFreeBet
+        bet_platform: betItem.platform
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -282,8 +285,7 @@ const App = () => {
       // Update user balance
       setUser(prevUser => ({
         ...prevUser,
-        balance: response.data.remaining_balance,
-        free_bets: response.data.remaining_free_bets
+        balance: response.data.remaining_balance
       }));
 
       // Remove bet from slip
@@ -324,21 +326,40 @@ const App = () => {
     }
   };
 
-  const handleWithdrawal = async (amount) => {
+  const handleDeposit = async (amount) => {
     try {
-      const response = await axios.post(`${API}/withdrawal/request`, {
+      const response = await axios.post(`${API}/deposit/request`, {
         amount: amount
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Update user winnings
+      alert(`Deposit request created! Send exactly ${amount} USDT to: ${response.data.send_to_address} on TRC-20 network`);
+      setShowDepositModal(false);
+      
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Deposit error:', error);
+      return { success: false, error: error.response?.data?.detail || 'Deposit failed' };
+    }
+  };
+
+  const handleWithdrawal = async (amount, address) => {
+    try {
+      const response = await axios.post(`${API}/withdrawal/request`, {
+        amount: amount,
+        usdt_address: address
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Update user balance
       setUser(prevUser => ({
         ...prevUser,
-        winnings: prevUser.winnings - amount
+        balance: prevUser.balance - amount
       }));
 
-      alert(`Withdrawal request submitted! USDT will be sent to: TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ`);
+      alert(`Withdrawal request submitted! ${amount} USDT will be sent to: ${address}`);
       setShowWithdrawalModal(false);
       
       return { success: true, data: response.data };
