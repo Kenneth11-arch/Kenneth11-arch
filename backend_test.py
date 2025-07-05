@@ -734,6 +734,14 @@ def run_tests():
     test_suite.addTest(Bet365CloneBackendTest('test_10_get_activities'))
     test_suite.addTest(Bet365CloneBackendTest('test_11_log_activity'))
     test_suite.addTest(Bet365CloneBackendTest('test_12_error_handling'))
+    test_suite.addTest(Bet365CloneBackendTest('test_13_verify_special_account_winnings'))
+    test_suite.addTest(Bet365CloneBackendTest('test_14_winnings_tracking_after_bet_settlement'))
+    test_suite.addTest(Bet365CloneBackendTest('test_15_usdt_withdrawal_valid_amount'))
+    test_suite.addTest(Bet365CloneBackendTest('test_16_usdt_withdrawal_insufficient_winnings'))
+    test_suite.addTest(Bet365CloneBackendTest('test_17_usdt_withdrawal_below_minimum'))
+    test_suite.addTest(Bet365CloneBackendTest('test_18_withdrawal_history'))
+    test_suite.addTest(Bet365CloneBackendTest('test_19_process_withdrawal_special_account'))
+    test_suite.addTest(Bet365CloneBackendTest('test_20_withdrawal_activity_logging'))
     
     # Run the tests
     runner = unittest.TextTestRunner(verbosity=2)
