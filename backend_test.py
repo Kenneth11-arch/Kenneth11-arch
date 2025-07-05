@@ -78,6 +78,20 @@ class Bet365BackendTest(unittest.TestCase):
             }
         )
         
+        if response.status_code != 200:
+            print(f"⚠️ Login failed: {response.text}. Trying to register first.")
+            # Try to register the user first
+            self.test_01_register_regular_user()
+            
+            # Try login again
+            response = requests.post(
+                f"{BACKEND_URL}/login",
+                json={
+                    "email": self.regular_user["email"],
+                    "password": self.regular_user["password"]
+                }
+            )
+        
         self.assertEqual(response.status_code, 200, f"Login failed: {response.text}")
         data = response.json()
         
