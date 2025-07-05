@@ -22,7 +22,10 @@ const {
   DepositModal,
   WithdrawalModal,
   SettledBetsModal,
-  MatchSettlementsModal
+  MatchSettlementsModal,
+  AdminDashboard,
+  ProfitLossChart,
+  RealTimeNotifications
 } = Components;
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -41,13 +44,17 @@ const App = () => {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [showSettledBets, setShowSettledBets] = useState(false);
   const [showMatchSettlements, setShowMatchSettlements] = useState(false);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [showProfitLossChart, setShowProfitLossChart] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
+  const [notifications, setNotifications] = useState([]);
   const [sportsData, setSportsData] = useState({
     liveMatches: [],
     upcomingMatches: [],
     allSportsData: {},
     filteredSport: null,
+    autoSettlementSuggestions: [],
     sportsCategories: [
       { name: 'Football', icon: '⚽', count: 0 },
       { name: 'Basketball', icon: '🏀', count: 0 },
