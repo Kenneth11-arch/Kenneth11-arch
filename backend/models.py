@@ -49,6 +49,14 @@ class User(BaseModel):
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: Optional[datetime] = None
+    
+    # Additional profile fields
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    usdt_wallet: Optional[str] = None
+    country: Optional[str] = None
+    timezone: Optional[str] = None
 
 class UserCreate(BaseModel):
     email: EmailStr
