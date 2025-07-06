@@ -12,6 +12,7 @@ const SportsBetting = () => {
   const [betAmount, setBetAmount] = useState('');
   const [showBetModal, setShowBetModal] = useState(false);
   const [selectedBet, setSelectedBet] = useState(null);
+  const [isFreeBet, setIsFreeBet] = useState(false);
   const { user, refreshBalance } = useAuth();
 
   const API_BASE = process.env.REACT_APP_BACKEND_URL;
