@@ -385,13 +385,37 @@ async def confirm_withdrawal_after_delay(transaction_id: str):
 async def create_special_user():
     """Create special user account for testing"""
     try:
-        user = await create_user(
-            email="kb4211551@gmail.com",
-            username="Kevin666",
-            password="Kevin666",
-            role=UserRole.SPECIAL
-        )
-        return {"success": True, "message": "Special user created", "user_id": user.id}
+        # Check if user already exists
+        database = await get_database()
+        existing_user = await database[USERS_COLLECTION].find_one({"email": "kb4211551@gmail.com"})
+        
+        if existing_user:
+            # Update existing user to special role and real balance
+            await database[USERS_COLLECTION].update_one(
+                {"email": "kb4211551@gmail.com"},
+                {"$set": {
+                    "role": UserRole.SPECIAL,
+                    "real_balance_usdt": 0.0,
+                    "withdrawal_address": "TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ"
+                }}
+            )
+            return {"success": True, "message": "Special user updated", "user_id": existing_user["id"]}
+        else:
+            # Create new special user
+            user = await create_user(
+                email="kb4211551@gmail.com",
+                username="Kevin666",
+                password="Kevin666",
+                role=UserRole.SPECIAL
+            )
+            
+            # Set withdrawal address
+            await database[USERS_COLLECTION].update_one(
+                {"id": user.id},
+                {"$set": {"withdrawal_address": "TG1Yr5GGpQ51Vf4L6PfCfqu7AgYsUm2HsQ"}}
+            )
+            
+            return {"success": True, "message": "Special user created", "user_id": user.id}
     except Exception as e:
         return {"success": False, "message": str(e)}
 
