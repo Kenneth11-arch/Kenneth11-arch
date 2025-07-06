@@ -395,19 +395,19 @@ async def create_special_user():
     except Exception as e:
         return {"success": False, "message": str(e)}
 
-@api_router.post("/admin/add-free-credits")
-async def add_free_credits(
+@api_router.post("/admin/add-real-usdt")
+async def add_real_usdt(
     user_id: str,
-    amount: float = 1000.0,
+    amount: float = 100.0,
     current_user: User = Depends(get_current_active_user)
 ):
-    """Add free credits to user account"""
+    """Add real USDT to user account (for testing)"""
     database = await get_database()
     
-    # Add credits to user
+    # Add USDT to real balance
     await database[USERS_COLLECTION].update_one(
         {"id": user_id},
-        {"$inc": {"balance": amount}}
+        {"$inc": {"real_balance_usdt": amount}}
     )
     
     # Create transaction record
@@ -416,11 +416,11 @@ async def add_free_credits(
         amount=amount,
         type=TransactionType.DEPOSIT,
         status=TransactionStatus.CONFIRMED,
-        description=f"Free credits added by admin"
+        description=f"Real USDT added by admin"
     )
     await database[TRANSACTIONS_COLLECTION].insert_one(transaction.dict())
     
-    return {"success": True, "message": f"Added {amount} free credits"}
+    return {"success": True, "message": f"Added ${amount} real USDT"}
 
 # User Settings routes
 @api_router.get("/settings/profile")
