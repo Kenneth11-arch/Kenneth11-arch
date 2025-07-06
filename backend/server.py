@@ -353,40 +353,16 @@ async def request_withdrawal(
     withdrawal: WithdrawalRequest,
     current_user: User = Depends(get_current_active_user)
 ):
-    """Request USDT withdrawal"""
-    database = await get_database()
-    
-    # Check balance
-    if current_user.balance < withdrawal.amount:
-        raise HTTPException(status_code=400, detail="Insufficient balance")
-    
-    if withdrawal.amount < 10:
-        raise HTTPException(status_code=400, detail="Minimum withdrawal is 10 USDT")
-    
-    # Create withdrawal transaction
-    transaction = Transaction(
-        user_id=current_user.id,
-        amount=-withdrawal.amount,
-        type=TransactionType.WITHDRAWAL,
-        status=TransactionStatus.PENDING,
-        to_address=withdrawal.to_address,
-        description=f"USDT withdrawal to {withdrawal.to_address}"
-    )
-    
-    # Deduct from balance
-    await database[USERS_COLLECTION].update_one(
-        {"id": current_user.id},
-        {"$inc": {"balance": -withdrawal.amount}}
-    )
-    
-    # Save transaction
-    await database[TRANSACTIONS_COLLECTION].insert_one(transaction.dict())
-    
-    # In real implementation, this would trigger actual USDT transfer
-    # For now, we'll mark as confirmed after 30 seconds
-    asyncio.create_task(confirm_withdrawal_after_delay(transaction.id))
-    
-    return {"success": True, "message": "Withdrawal request submitted", "transaction_id": transaction.id}
+    """Request REAL USDT withdrawal"""
+    try:
+        result = await usdt_service.process_withdrawal(
+            current_user, 
+            withdrawal.amount, 
+            withdrawal.to_address
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 async def confirm_withdrawal_after_delay(transaction_id: str):
     """Simulate withdrawal confirmation after delay"""
