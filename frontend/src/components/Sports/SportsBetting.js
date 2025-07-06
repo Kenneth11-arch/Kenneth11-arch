@@ -402,10 +402,10 @@ const SportsBetting = () => {
               <div className="mt-1 text-sm text-gray-600">
                 {isFreeBet && user?.role === 'special' ? (
                   <span className="text-gold-600 font-medium">
-                    🎁 Unlimited Free Bet - No balance deduction
+                    🎁 Unlimited Free Bet - Winnings paid in real USDT
                   </span>
                 ) : (
-                  `Balance: $${user?.balance?.toFixed(2) || '0.00'}`
+                  `Real USDT Balance: $${user?.real_balance_usdt?.toFixed(2) || '0.00'}`
                 )}
               </div>
             </div>
