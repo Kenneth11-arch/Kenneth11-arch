@@ -138,7 +138,7 @@ async def get_balance(current_user: User = Depends(get_current_active_user)):
     if user_data:
         return {
             "real_balance_usdt": user_data.get("real_balance_usdt", 0.0),
-            "free_bet_balance": float('inf') if user_data.get("role") == UserRole.SPECIAL else 0.0
+            "free_bet_balance": 999999.0 if user_data.get("role") == UserRole.SPECIAL else 0.0
         }
     return {
         "real_balance_usdt": 0.0,
