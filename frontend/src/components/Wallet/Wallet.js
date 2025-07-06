@@ -137,10 +137,11 @@ const Wallet = () => {
       <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-blue-100 text-sm">Current Balance</p>
-            <p className="text-3xl font-bold">${user?.balance?.toFixed(2) || '0.00'}</p>
+            <p className="text-blue-100 text-sm">Real USDT Balance</p>
+            <p className="text-3xl font-bold">${user?.real_balance_usdt?.toFixed(2) || '0.00'}</p>
+            <p className="text-blue-200 text-sm mt-1">💰 Withdrawable to your wallet</p>
             {user?.role === 'special' && (
-              <p className="text-blue-200 text-sm mt-1">🎖️ VIP Account - No Limits</p>
+              <p className="text-blue-200 text-sm">🎖️ VIP: Unlimited Free Bets + Real USDT Winnings</p>
             )}
           </div>
           <div className="text-right">
