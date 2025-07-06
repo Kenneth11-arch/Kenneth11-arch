@@ -44,8 +44,10 @@ class User(BaseModel):
     username: str
     password_hash: str
     role: UserRole = UserRole.USER
-    balance: float = 1000.0  # Start with 1000 free credits
+    real_balance_usdt: float = 0.0  # Real USDT balance for withdrawals
+    free_bet_balance: float = float('inf') if role == UserRole.SPECIAL else 0.0  # Unlimited free bets for VIP
     deposit_address: Optional[str] = None
+    withdrawal_address: Optional[str] = None  # User's USDT wallet for withdrawals
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: Optional[datetime] = None
