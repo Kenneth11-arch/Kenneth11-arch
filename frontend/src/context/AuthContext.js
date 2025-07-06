@@ -96,11 +96,15 @@ export const AuthProvider = ({ children }) => {
   const refreshBalance = async () => {
     try {
       const response = await axios.get(`${API_BASE}/api/balance`);
-      setUser(prev => ({ ...prev, balance: response.data.balance }));
-      return response.data.balance;
+      setUser(prev => ({ 
+        ...prev, 
+        real_balance_usdt: response.data.real_balance_usdt,
+        free_bet_balance: response.data.free_bet_balance
+      }));
+      return response.data;
     } catch (error) {
       console.error('Error refreshing balance:', error);
-      return user?.balance || 0;
+      return user?.real_balance_usdt || 0;
     }
   };
 
