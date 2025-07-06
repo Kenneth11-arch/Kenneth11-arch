@@ -125,6 +125,7 @@ async def create_user(email: str, username: str, password: str, role: UserRole =
         password_hash=get_password_hash(password),
         role=role,
         real_balance_usdt=0.0,  # Start with 0 real USDT
+        free_bet_balance=999999.0 if role == UserRole.SPECIAL else 0.0,  # Unlimited for VIP
         withdrawal_address=email.replace('@', '_').replace('.', '_') + "_wallet"  # Placeholder
     )
     
