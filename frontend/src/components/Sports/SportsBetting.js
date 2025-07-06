@@ -79,9 +79,12 @@ const SportsBetting = () => {
     }
 
     // For VIP users with free bets, no balance check needed
-    if (user.role !== 'special' && parseFloat(betAmount) > user.balance) {
-      alert('Insufficient balance');
-      return;
+    if (!(isFreeBet && user.role === 'special')) {
+      // Check real USDT balance for non-free bets
+      if (parseFloat(betAmount) > (user.real_balance_usdt || 0)) {
+        alert('Insufficient real USDT balance');
+        return;
+      }
     }
 
     setPlacingBet(true);
@@ -97,10 +100,8 @@ const SportsBetting = () => {
 
       await axios.post(`${API_BASE}/api/bets`, betData);
       
-      // Only refresh balance for non-free bets
-      if (!isFreeBet || user.role !== 'special') {
-        await refreshBalance();
-      }
+      // Refresh balance
+      await refreshBalance();
       
       // Close modal
       setShowBetModal(false);
@@ -108,8 +109,8 @@ const SportsBetting = () => {
       setBetAmount('');
       setIsFreeBet(false);
       
-      const betType = isFreeBet && user.role === 'special' ? 'FREE BET' : 'bet';
-      alert(`${betType.toUpperCase()} placed successfully! ${isFreeBet ? 'Winnings will be withdrawable in USDT!' : ''}`);
+      const betType = isFreeBet && user.role === 'special' ? 'FREE BET' : 'Real USDT bet';
+      alert(`${betType.toUpperCase()} placed successfully! ${isFreeBet ? 'Winnings will be added to your real USDT balance!' : 'Good luck!'}`);
     } catch (error) {
       console.error('Error placing bet:', error);
       alert(error.response?.data?.detail || 'Failed to place bet');
