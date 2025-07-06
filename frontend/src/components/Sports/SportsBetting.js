@@ -64,9 +64,10 @@ const SportsBetting = () => {
       match,
       selection,
       odds,
-      type: 'back' // Default to back bet
+      type: 'back', // Default to back bet
+      isFreebet: user?.role === 'special' // VIP users get free bet option
     });
-    setBetAmount('10');
+    setBetAmount(user?.role === 'special' ? '0' : '10'); // Start with 0 for VIP (unlimited free bets)
     setShowBetModal(true);
   };
 
