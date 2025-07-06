@@ -124,8 +124,10 @@ async def get_profile(current_user: User = Depends(get_current_active_user)):
         email=current_user.email,
         username=current_user.username,
         role=current_user.role,
-        balance=current_user.balance,
+        real_balance_usdt=current_user.real_balance_usdt,
+        free_bet_balance=999999.0 if current_user.role == UserRole.SPECIAL else current_user.free_bet_balance,
         deposit_address=current_user.deposit_address,
+        withdrawal_address=current_user.withdrawal_address,
         created_at=current_user.created_at
     )
 
