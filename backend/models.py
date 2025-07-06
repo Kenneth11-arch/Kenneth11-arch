@@ -121,6 +121,7 @@ class Bet(BaseModel):
     matched_amount: float = 0.0
     unmatched_amount: float = 0.0
     commission_rate: float = 0.02  # 2% commission
+    is_free_bet: bool = False  # VIP unlimited free bets
     created_at: datetime = Field(default_factory=datetime.utcnow)
     matched_at: Optional[datetime] = None
     settled_at: Optional[datetime] = None
