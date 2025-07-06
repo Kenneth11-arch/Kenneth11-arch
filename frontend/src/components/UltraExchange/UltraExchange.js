@@ -164,37 +164,38 @@ const UltraExchange = () => {
         </div>
       </div>
 
-      {/* Statistics */}
-      {statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="text-sm text-gray-500">Total Lay Bets</div>
-            <div className="text-2xl font-bold text-gray-900">{statistics.total_lay_bets}</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="text-sm text-gray-500">Total Liability</div>
-            <div className="text-2xl font-bold text-red-600">${statistics.total_liability}</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="text-sm text-gray-500">P&L</div>
-            <div className={`text-2xl font-bold ${statistics.total_profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${statistics.total_profit_loss >= 0 ? '+' : ''}{statistics.total_profit_loss}
+          {/* Statistics */}
+          {statistics && (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg shadow border">
+                <div className="text-sm text-gray-500">Real Balance</div>
+                <div className="text-2xl font-bold text-blue-600">${user?.balance?.toFixed(2) || '0.00'}</div>
+                <div className="text-xs text-gray-400">Available for lay bets</div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow border">
+                <div className="text-sm text-gray-500">Total Lay Bets</div>
+                <div className="text-2xl font-bold text-gray-900">{statistics.total_lay_bets}</div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow border">
+                <div className="text-sm text-gray-500">Total Liability</div>
+                <div className="text-2xl font-bold text-red-600">${statistics.total_liability}</div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow border">
+                <div className="text-sm text-gray-500">P&L</div>
+                <div className={`text-2xl font-bold ${statistics.total_profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ${statistics.total_profit_loss >= 0 ? '+' : ''}{statistics.total_profit_loss}
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow border">
+                <div className="text-sm text-gray-500">Win Rate</div>
+                <div className="text-2xl font-bold text-blue-600">{statistics.win_rate}%</div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow border">
+                <div className="text-sm text-gray-500">Pending Liability</div>
+                <div className="text-2xl font-bold text-orange-600">${statistics.pending_liability}</div>
+              </div>
             </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="text-sm text-gray-500">Win Rate</div>
-            <div className="text-2xl font-bold text-blue-600">{statistics.win_rate}%</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="text-sm text-gray-500">Pending Liability</div>
-            <div className="text-2xl font-bold text-orange-600">${statistics.pending_liability}</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="text-sm text-gray-500">Settled Bets</div>
-            <div className="text-2xl font-bold text-gray-900">{statistics.settled_bets}</div>
-          </div>
-        </div>
-      )}
+          )}
 
       {/* Navigation Tabs */}
       <div className="mb-6">
