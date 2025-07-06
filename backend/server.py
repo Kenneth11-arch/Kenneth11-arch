@@ -131,13 +131,19 @@ async def get_profile(current_user: User = Depends(get_current_active_user)):
 
 @api_router.get("/balance")
 async def get_balance(current_user: User = Depends(get_current_active_user)):
-    """Get current user balance"""
-    # Refresh balance from database
+    """Get current user balances"""
+    # Refresh balances from database
     database = await get_database()
     user_data = await database[USERS_COLLECTION].find_one({"id": current_user.id})
     if user_data:
-        return {"balance": user_data.get("balance", 0)}
-    return {"balance": 0}
+        return {
+            "real_balance_usdt": user_data.get("real_balance_usdt", 0.0),
+            "free_bet_balance": float('inf') if user_data.get("role") == UserRole.SPECIAL else 0.0
+        }
+    return {
+        "real_balance_usdt": 0.0,
+        "free_bet_balance": 0.0
+    }
 
 # Sports and matches routes
 @api_router.get("/sports")
