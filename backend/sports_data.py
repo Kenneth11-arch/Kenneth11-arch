@@ -246,13 +246,57 @@ class SportsDataService:
             logger.error(f"Error updating matches: {e}")
     
     async def simulate_live_matches(self):
-        """Simulate live matches with score updates"""
+        """Simulate live matches with score updates and auto-settlement"""
         database = await get_database()
         
-        # Get matches that should be live
+        # Get matches that should be live or completed
         now = datetime.utcnow()
+        
+        # Auto-settle matches older than 2 hours
+        old_completed_matches = await database[MATCHES_COLLECTION].find({
+            "commence_time": {"$lt": now - timedelta(hours=2)},
+            "status": {"$in": [MatchStatus.UPCOMING, MatchStatus.LIVE, MatchStatus.COMPLETED]}
+        }).to_list(100)
+        
+        for match_data in old_completed_matches:
+            match = Match(**match_data)
+            
+            if match.status != MatchStatus.SETTLED:
+                # Generate final score and winner for old matches
+                home_score = random.randint(0, 4)
+                away_score = random.randint(0, 4)
+                
+                # Determine winner
+                if home_score > away_score:
+                    winner = "home"
+                elif away_score > home_score:
+                    winner = "away"
+                else:
+                    winner = "draw"
+                
+                # Update match to completed
+                await database[MATCHES_COLLECTION].update_one(
+                    {"match_id": match.match_id},
+                    {"$set": {
+                        "status": MatchStatus.COMPLETED,
+                        "home_score": home_score,
+                        "away_score": away_score,
+                        "winner": winner,
+                        "last_updated": datetime.utcnow()
+                    }}
+                )
+                
+                # Import and use betting engine to settle bets
+                from betting_engine import betting_engine
+                try:
+                    await betting_engine.settle_match(match.id)
+                except Exception as e:
+                    logger.error(f"Error settling match {match.id}: {e}")
+        
+        # Handle live matches progression
         live_matches = await database[MATCHES_COLLECTION].find({
             "commence_time": {"$lt": now},
+            "commence_time": {"$gt": now - timedelta(hours=2)},
             "status": {"$in": [MatchStatus.UPCOMING, MatchStatus.LIVE]}
         }).to_list(100)
         
@@ -274,7 +318,7 @@ class SportsDataService:
             elif match.status == MatchStatus.LIVE:
                 # Check if match should end (after 2 hours)
                 if now > match.commence_time + timedelta(hours=2):
-                    # End the match
+                    # End the match and settle
                     home_score = random.randint(0, 5)
                     away_score = random.randint(0, 5)
                     
@@ -296,6 +340,13 @@ class SportsDataService:
                             "last_updated": datetime.utcnow()
                         }}
                     )
+                    
+                    # Settle bets immediately
+                    from betting_engine import betting_engine
+                    try:
+                        await betting_engine.settle_match(match.id)
+                    except Exception as e:
+                        logger.error(f"Error settling match {match.id}: {e}")
                 else:
                     # Update live scores
                     home_score = random.randint(0, 3)
