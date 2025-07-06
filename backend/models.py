@@ -132,6 +132,7 @@ class BetCreate(BaseModel):
     selection: str
     stake: float
     odds: float
+    is_free_bet: bool = False
 
 class BetMatch(BaseModel):
     back_bet_id: str
