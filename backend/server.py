@@ -27,6 +27,7 @@ from betting_engine import betting_engine
 from arbitrage import arbitrage_engine
 from ultra_exchange import ultra_exchange
 from user_settings import user_settings_manager
+from usdt_service import usdt_service
 from database import (
     USERS_COLLECTION, MATCHES_COLLECTION, BETS_COLLECTION, TRANSACTIONS_COLLECTION
 )
