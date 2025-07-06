@@ -238,99 +238,149 @@ const ArbitrageSystem = () => {
           </div>
         )}
 
-        <div className="space-y-4">
-          {opportunities.map((opportunity) => (
-            <div key={`${opportunity.match_id}-${opportunity.outcome}`} className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="p-4">
-                {/* Opportunity Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">
-                      {opportunity.match_home_team} vs {opportunity.match_away_team}
-                    </h4>
-                    <p className="text-sm text-gray-500">
-                      {formatDateTime(opportunity.match_commence_time)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-lg font-bold ${getProfitColor(opportunity.profit_percentage)}`}>
-                      {opportunity.profit_percentage}% Profit
+            <div className="space-y-4">
+              {opportunities.map((opportunity) => (
+                <div key={`${opportunity.match_id}-${opportunity.outcome}`} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                  
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 border-b">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-lg text-gray-900">
+                          {opportunity.match_home_team} vs {opportunity.match_away_team}
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          {formatDateTime(opportunity.match_commence_time)} • Risk-Free Arbitrage
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-green-600">
+                          +${opportunity.guaranteed_profit}
+                        </div>
+                        <div className="text-sm text-green-700">
+                          {opportunity.profit_percentage}% Guaranteed Profit
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm text-green-600 font-semibold">
-                      +${opportunity.guaranteed_profit}
+                  </div>
+
+                  {/* Step-by-step Instructions (Outplayed Style) */}
+                  <div className="p-6">
+                    
+                    {/* Step 1: Bet365 Free Bet */}
+                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <span className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">1</span>
+                          <div>
+                            <h5 className="font-bold text-blue-800">Go to Bet365 and place your ${opportunity.stake_bet365} free bet on {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'}</h5>
+                            <p className="text-sm text-blue-600">Odds: {opportunity.bet365_odd} • Free bet (no balance deduction)</p>
+                          </div>
+                        </div>
+                        <div className="text-blue-600 font-bold text-lg">
+                          🎁 FREE BET
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          // Auto-navigate to sports betting and pre-fill the bet
+                          localStorage.setItem('autoBet', JSON.stringify({
+                            match_id: opportunity.match_id,
+                            selection: opportunity.outcome,
+                            odds: opportunity.bet365_odd,
+                            stake: opportunity.stake_bet365,
+                            isFreeBet: true
+                          }));
+                          window.location.href = '#sports';
+                        }}
+                        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                      >
+                        🎯 Go to Bet365 and Place Free Bet
+                      </button>
                     </div>
-                  </div>
-                </div>
 
-                {/* Strategy */}
-                <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                  <h5 className="font-semibold text-green-800 mb-1">📋 Arbitrage Strategy:</h5>
-                  <p className="text-sm text-green-700">{opportunity.recommendation}</p>
-                </div>
+                    {/* Account Status */}
+                    <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-green-600 text-xl">✅</span>
+                          <span className="font-medium text-green-800">UltraExchange account connected</span>
+                        </div>
+                        <span className="text-green-600 font-bold">${user?.balance?.toFixed(2)} available</span>
+                      </div>
+                    </div>
 
-                {/* Betting Details */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <div className="text-sm text-blue-600 font-medium">Bet365 (Back)</div>
-                    <div className="text-lg font-bold text-blue-700">{opportunity.bet365_odd}</div>
-                    <div className="text-sm text-blue-600">Stake: ${opportunity.stake_bet365}</div>
-                  </div>
-                  
-                  <div className="bg-red-50 p-3 rounded-lg">
-                    <div className="text-sm text-red-600 font-medium">UltraExchange (Lay)</div>
-                    <div className="text-lg font-bold text-red-700">{opportunity.ultra_lay_odd}</div>
-                    <div className="text-sm text-red-600">Stake: ${opportunity.stake_ultra_lay}</div>
-                  </div>
-                  
-                  <div className="bg-orange-50 p-3 rounded-lg">
-                    <div className="text-sm text-orange-600 font-medium">Liability</div>
-                    <div className="text-lg font-bold text-orange-700">${opportunity.liability_ultra}</div>
-                    <div className="text-sm text-orange-600">Required balance</div>
-                  </div>
-                  
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <div className="text-sm text-green-600 font-medium">Guaranteed Profit</div>
-                    <div className="text-lg font-bold text-green-700">+${opportunity.guaranteed_profit}</div>
-                    <div className="text-sm text-green-600">{opportunity.profit_percentage}% return</div>
-                  </div>
-                </div>
+                    {/* Step 2: UltraExchange Lay Bet */}
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <span className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">2</span>
+                          <div>
+                            <h5 className="font-bold text-red-800">Click here to place a ${opportunity.stake_ultra_lay} lay bet against {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'} on UltraExchange</h5>
+                            <p className="text-sm text-red-600">Lay Odds: {opportunity.ultra_lay_odd} • Liability: ${opportunity.liability_ultra}</p>
+                          </div>
+                        </div>
+                        <div className="text-red-600 font-bold text-lg">
+                          LAY BET
+                        </div>
+                      </div>
+                      
+                      {user.balance >= opportunity.liability_ultra ? (
+                        <button
+                          onClick={() => autoLayBet(opportunity)}
+                          disabled={autoLaying === opportunity.match_id}
+                          className="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
+                        >
+                          {autoLaying === opportunity.match_id ? (
+                            <span className="flex items-center justify-center">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Placing Lay Bet...
+                            </span>
+                          ) : (
+                            `📈 Click here to place ${opportunity.stake_ultra_lay} lay bet on UltraExchange`
+                          )}
+                        </button>
+                      ) : (
+                        <div className="text-center">
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                            <p className="text-yellow-800 font-medium">
+                              ⚠️ Insufficient balance. Need ${opportunity.liability_ultra} to cover liability.
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => window.location.href = '#wallet'}
+                            className="bg-yellow-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
+                          >
+                            💰 Add Funds to Wallet
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
-                {/* Profit Scenarios */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="text-sm text-gray-600 font-medium">If Bet365 Wins</div>
-                    <div className="text-lg font-bold text-green-600">+${opportunity.profit_if_bet365_wins}</div>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="text-sm text-gray-600 font-medium">If UltraExchange Wins</div>
-                    <div className="text-lg font-bold text-green-600">+${opportunity.profit_if_ultra_wins}</div>
-                  </div>
-                </div>
+                    {/* Profit Breakdown (Outplayed Style) */}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h6 className="font-bold text-gray-800 mb-3">📊 Profit Breakdown:</h6>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="bg-white p-3 rounded border">
+                          <div className="text-gray-600">If {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'} wins:</div>
+                          <div className="font-bold text-green-600">+${opportunity.profit_if_bet365_wins}</div>
+                        </div>
+                        <div className="bg-white p-3 rounded border">
+                          <div className="text-gray-600">If {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'} loses:</div>
+                          <div className="font-bold text-green-600">+${opportunity.profit_if_ultra_wins}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 p-3 bg-green-100 rounded text-center">
+                        <span className="font-bold text-green-800">
+                          🎯 Guaranteed Profit: +${opportunity.guaranteed_profit} regardless of outcome
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Action Button */}
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => autoLayBet(opportunity)}
-                    disabled={autoLaying === opportunity.match_id || user.balance < opportunity.liability_ultra}
-                    className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {autoLaying === opportunity.match_id ? (
-                      <span className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Placing Auto-Lay...
-                      </span>
-                    ) : user.balance < opportunity.liability_ultra ? (
-                      'Insufficient Balance'
-                    ) : (
-                      `🤖 Auto-Lay for +$${opportunity.guaranteed_profit} Profit`
-                    )}
-                  </button>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
 
         {!loading && opportunities.length === 0 && (
           <div className="text-center py-12">
