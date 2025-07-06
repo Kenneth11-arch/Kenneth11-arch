@@ -79,8 +79,8 @@ const UltraExchange = () => {
     }
 
     const liability = (selectedLay.layOdds - 1) * parseFloat(layStake);
-    if (liability > user.balance) {
-      alert('Insufficient balance to cover liability');
+    if (liability > (user.real_balance_usdt || 0)) {
+      alert('Insufficient real USDT balance to cover liability');
       return;
     }
 
