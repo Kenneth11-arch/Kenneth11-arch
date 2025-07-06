@@ -68,8 +68,10 @@ async def register(user_data: UserCreate):
             email=user.email,
             username=user.username,
             role=user.role,
-            balance=user.balance,
+            real_balance_usdt=user.real_balance_usdt,
+            free_bet_balance=float('inf') if user.role == UserRole.SPECIAL else 0.0,
             deposit_address=user.deposit_address,
+            withdrawal_address=user.withdrawal_address,
             created_at=user.created_at
         )
     except Exception as e:
