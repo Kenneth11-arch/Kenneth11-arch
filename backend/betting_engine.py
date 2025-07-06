@@ -28,11 +28,18 @@ class BettingEngine:
         if match.status != MatchStatus.UPCOMING:
             raise ValueError("Match is no longer open for betting")
         
-        # For VIP users with free bets, no balance check needed
-        if not (bet_data.is_free_bet and user.role == UserRole.SPECIAL):
-            # Check if user has enough balance for regular bets
-            if user.balance < bet_data.stake:
-                raise ValueError("Insufficient balance")
+        # For free bets (VIP unlimited), no balance check needed
+        if bet_data.is_free_bet and user.role == UserRole.SPECIAL:
+            # Free bet - no deduction
+            balance_to_check = float('inf')  # Unlimited
+            balance_source = "free_bet"
+        else:
+            # Real money bet - check real USDT balance
+            balance_to_check = user.real_balance_usdt
+            balance_source = "real_usdt"
+            
+            if balance_to_check < bet_data.stake:
+                raise ValueError("Insufficient real USDT balance")
         
         # Calculate potential return
         potential_return = bet_data.stake * bet_data.odds
@@ -54,12 +61,12 @@ class BettingEngine:
             unmatched_amount=bet_data.stake
         )
         
-        # Only deduct from balance if it's not a free bet
+        # Deduct from appropriate balance
         if not (bet_data.is_free_bet and user.role == UserRole.SPECIAL):
-            # Deduct stake from user balance
+            # Real money bet - deduct from real USDT balance
             await database[USERS_COLLECTION].update_one(
                 {"id": user.id},
-                {"$inc": {"balance": -bet_data.stake}}
+                {"$inc": {"real_balance_usdt": -bet_data.stake}}
             )
             
             # Create transaction record
@@ -68,17 +75,17 @@ class BettingEngine:
                 amount=-bet_data.stake,
                 type=TransactionType.BET_STAKE,
                 status=TransactionStatus.CONFIRMED,
-                description=f"Bet placed on {match.home_team} vs {match.away_team}"
+                description=f"Real USDT bet on {match.home_team} vs {match.away_team}"
             )
             await database[TRANSACTIONS_COLLECTION].insert_one(transaction.dict())
         else:
-            # Create free bet transaction record
+            # Free bet transaction record
             transaction = Transaction(
                 user_id=user.id,
                 amount=0,
                 type=TransactionType.BET_STAKE,
                 status=TransactionStatus.CONFIRMED,
-                description=f"FREE BET placed on {match.home_team} vs {match.away_team} (VIP)"
+                description=f"FREE BET (VIP) on {match.home_team} vs {match.away_team}"
             )
             await database[TRANSACTIONS_COLLECTION].insert_one(transaction.dict())
         
@@ -88,7 +95,7 @@ class BettingEngine:
         # Try to match the bet
         await self.match_bet(bet)
         
-        bet_type = "FREE BET" if bet_data.is_free_bet and user.role == UserRole.SPECIAL else "Bet"
+        bet_type = "FREE BET" if bet_data.is_free_bet and user.role == UserRole.SPECIAL else "Real USDT Bet"
         logger.info(f"{bet_type} placed: {bet.id} by user {user.id}")
         return bet
     
