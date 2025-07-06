@@ -78,7 +78,8 @@ const SportsBetting = () => {
       return;
     }
 
-    if (parseFloat(betAmount) > user.balance) {
+    // For VIP users with free bets, no balance check needed
+    if (user.role !== 'special' && parseFloat(betAmount) > user.balance) {
       alert('Insufficient balance');
       return;
     }
@@ -90,20 +91,25 @@ const SportsBetting = () => {
         bet_type: selectedBet.type,
         selection: selectedBet.selection,
         stake: parseFloat(betAmount),
-        odds: selectedBet.odds
+        odds: selectedBet.odds,
+        is_free_bet: isFreeBet && user.role === 'special'
       };
 
       await axios.post(`${API_BASE}/api/bets`, betData);
       
-      // Refresh balance
-      await refreshBalance();
+      // Only refresh balance for non-free bets
+      if (!isFreeBet || user.role !== 'special') {
+        await refreshBalance();
+      }
       
       // Close modal
       setShowBetModal(false);
       setSelectedBet(null);
       setBetAmount('');
+      setIsFreeBet(false);
       
-      alert('Bet placed successfully!');
+      const betType = isFreeBet && user.role === 'special' ? 'FREE BET' : 'bet';
+      alert(`${betType.toUpperCase()} placed successfully! ${isFreeBet ? 'Winnings will be withdrawable in USDT!' : ''}`);
     } catch (error) {
       console.error('Error placing bet:', error);
       alert(error.response?.data?.detail || 'Failed to place bet');
