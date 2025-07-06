@@ -30,8 +30,8 @@ class BettingEngine:
         
         # For free bets (VIP unlimited), no balance check needed
         if bet_data.is_free_bet and user.role == UserRole.SPECIAL:
-            # Free bet - no deduction
-            balance_to_check = float('inf')  # Unlimited
+            # Free bet - no deduction needed, unlimited for VIP
+            balance_to_check = 999999.0  # Large number representing unlimited
             balance_source = "free_bet"
         else:
             # Real money bet - check real USDT balance
