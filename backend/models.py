@@ -74,8 +74,10 @@ class UserResponse(BaseModel):
     email: str
     username: str
     role: str
-    balance: float
+    real_balance_usdt: float
+    free_bet_balance: float
     deposit_address: Optional[str]
+    withdrawal_address: Optional[str]
     created_at: datetime
 
 # Match Models
