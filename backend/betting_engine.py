@@ -175,7 +175,7 @@ class BettingEngine:
             )
     
     async def settle_match(self, match_id: str):
-        """Settle all bets for a completed match"""
+        """Settle all bets for a completed match with REAL USDT payouts"""
         database = await get_database()
         
         # Get completed match
@@ -194,39 +194,64 @@ class BettingEngine:
             "status": {"$in": [BetStatus.PENDING, BetStatus.MATCHED]}
         }).to_list(1000)
         
+        # Import USDT service for real payouts
+        from usdt_service import usdt_service
+        
         for bet_data in bets:
             bet = Bet(**bet_data)
             
             # Determine if bet won
             won = bet.selection == match.winner
             
-            # Calculate profit/loss
+            # Calculate profit/loss and payouts
             if won:
                 if bet.bet_type == BetType.BACK:
                     # Winning back bet
-                    profit = bet.matched_amount * (bet.odds - 1)
+                    gross_winnings = bet.matched_amount * bet.odds
+                    profit = gross_winnings - bet.matched_amount
                     commission = profit * bet.commission_rate
-                    net_profit = profit - commission
-                    total_return = bet.matched_amount + net_profit
+                    net_winnings = gross_winnings - commission
+                    
+                    # For free bets, only pay the profit (not the stake back)
+                    if bet.is_free_bet:
+                        payout_amount = profit - commission  # Just the profit
+                        description = f"FREE BET winnings: {match.home_team} vs {match.away_team}"
+                    else:
+                        payout_amount = net_winnings  # Full winnings including stake
+                        description = f"Bet winnings: {match.home_team} vs {match.away_team}"
+                    
                 else:
                     # Winning lay bet (collect stake, pay nothing)
                     profit = bet.matched_amount
                     commission = profit * bet.commission_rate
-                    net_profit = profit - commission
-                    total_return = bet.matched_amount + net_profit
+                    payout_amount = bet.matched_amount - commission
+                    description = f"Lay bet winnings: {match.home_team} vs {match.away_team}"
+                
+                # Add winnings to REAL USDT balance
+                if payout_amount > 0:
+                    await usdt_service.process_bet_winnings(
+                        bet.user_id, 
+                        payout_amount, 
+                        description
+                    )
+                    
+                net_profit = payout_amount - (0 if bet.is_free_bet else bet.matched_amount)
+                
             else:
                 if bet.bet_type == BetType.BACK:
-                    # Losing back bet (lose stake)
-                    net_profit = -bet.matched_amount
-                    total_return = 0
+                    # Losing back bet
+                    if bet.is_free_bet:
+                        net_profit = 0  # No loss for free bets
+                    else:
+                        net_profit = -bet.matched_amount  # Lost the stake
+                    payout_amount = 0
                 else:
-                    # Losing lay bet (pay out winnings)
+                    # Losing lay bet (pay out winnings to other side)
                     liability = bet.matched_amount * (bet.odds - 1)
-                    commission = 0  # No commission on losing bets
                     net_profit = -liability
-                    total_return = bet.matched_amount - liability
+                    payout_amount = 0  # We pay out, don't receive
             
-            # Update bet
+            # Update bet as settled
             await database[BETS_COLLECTION].update_one(
                 {"id": bet.id},
                 {
@@ -238,40 +263,29 @@ class BettingEngine:
                 }
             )
             
-            # Update user balance
-            if total_return > 0:
-                await database[USERS_COLLECTION].update_one(
-                    {"id": bet.user_id},
-                    {"$inc": {"balance": total_return}}
-                )
-                
-                # Create transaction record
-                transaction = Transaction(
-                    user_id=bet.user_id,
-                    amount=total_return,
-                    type=TransactionType.BET_RETURN,
-                    status=TransactionStatus.CONFIRMED,
-                    description=f"Bet return: {match.home_team} vs {match.away_team}"
-                )
-                await database[TRANSACTIONS_COLLECTION].insert_one(transaction.dict())
-            
-            # Return unmatched amount
+            # Return unmatched amount to appropriate balance
             if bet.unmatched_amount > 0:
-                await database[USERS_COLLECTION].update_one(
-                    {"id": bet.user_id},
-                    {"$inc": {"balance": bet.unmatched_amount}}
-                )
-                
-                transaction = Transaction(
-                    user_id=bet.user_id,
-                    amount=bet.unmatched_amount,
-                    type=TransactionType.BET_RETURN,
-                    status=TransactionStatus.CONFIRMED,
-                    description=f"Unmatched bet return: {match.home_team} vs {match.away_team}"
-                )
-                await database[TRANSACTIONS_COLLECTION].insert_one(transaction.dict())
+                if bet.is_free_bet:
+                    # Free bet unmatched amount - no refund needed
+                    pass
+                else:
+                    # Return unmatched stake to real USDT balance
+                    await database[USERS_COLLECTION].update_one(
+                        {"id": bet.user_id},
+                        {"$inc": {"real_balance_usdt": bet.unmatched_amount}}
+                    )
+                    
+                    # Create transaction record
+                    transaction = Transaction(
+                        user_id=bet.user_id,
+                        amount=bet.unmatched_amount,
+                        type=TransactionType.BET_RETURN,
+                        status=TransactionStatus.CONFIRMED,
+                        description=f"Unmatched bet refund: {match.home_team} vs {match.away_team}"
+                    )
+                    await database[TRANSACTIONS_COLLECTION].insert_one(transaction.dict())
         
-        # Update match status
+        # Update match status to settled
         await database[MATCHES_COLLECTION].update_one(
             {"id": match_id},
             {
@@ -282,7 +296,11 @@ class BettingEngine:
             }
         )
         
-        logger.info(f"Settled {len(bets)} bets for match {match_id}")
+        logger.info(f"Settled {len(bets)} bets for match {match_id} with REAL USDT payouts")
+        
+        # Log settlement details
+        total_payouts = sum(bet.get("profit_loss", 0) for bet in bets if bet.get("profit_loss", 0) > 0)
+        logger.info(f"Total REAL USDT winnings paid out: ${total_payouts:.2f}")
     
     async def get_user_bets(self, user_id: str, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
         """Get user's bet history with match details"""
