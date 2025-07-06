@@ -174,15 +174,26 @@ const Wallet = () => {
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow border">
-          <h3 className="font-semibold text-gray-900 mb-2">🎁 Free Credits</h3>
-          <p className="text-sm text-gray-600 mb-3">Get unlimited free betting credits</p>
+          <h3 className="font-semibold text-gray-900 mb-2">💸 Add Real USDT</h3>
+          <p className="text-sm text-gray-600 mb-3">Add real USDT to your account (testing)</p>
           <button
-            onClick={addFreeCredits}
-            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+            onClick={async () => {
+              try {
+                await axios.post(`${API_BASE}/api/admin/add-real-usdt`, {
+                  user_id: user.id,
+                  amount: 100
+                });
+                await refreshBalance();
+                alert('$100 real USDT added to your account!');
+              } catch (error) {
+                alert('Failed to add USDT');
+              }
+            }}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
           >
-            Add 1000 Credits
+            Add $100 Real USDT
           </button>
-          <p className="text-xs text-gray-500 mt-2">For testing purposes</p>
+          <p className="text-xs text-gray-500 mt-2">For testing withdrawals</p>
         </div>
       </div>
 
