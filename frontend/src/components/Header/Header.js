@@ -73,19 +73,34 @@ const Header = ({ onSectionChange, activeSection }) => {
 
           {/* User Info */}
           <div className="flex items-center space-x-4">
-            {/* Balance */}
-            <div className="flex items-center space-x-2 bg-green-600 px-3 py-1 rounded-full">
-              <span className="text-sm font-semibold">
-                ${user?.balance?.toFixed(2) || '0.00'}
-              </span>
-              <button
-                onClick={handleRefreshBalance}
-                className="text-xs hover:underline"
-                title="Refresh Balance"
-              >
-                🔄
-              </button>
+          {/* Balance Display */}
+          <div className="flex items-center space-x-3">
+            {/* Real USDT Balance */}
+            <div className="bg-green-600 px-3 py-1 rounded-full">
+              <div className="text-xs text-green-100">Real USDT</div>
+              <div className="text-sm font-semibold text-white">
+                ${user?.real_balance_usdt?.toFixed(2) || '0.00'}
+              </div>
             </div>
+            
+            {/* Free Bet Balance (VIP only) */}
+            {user?.role === 'special' && (
+              <div className="bg-gold-500 px-3 py-1 rounded-full">
+                <div className="text-xs text-gold-100">Free Bets</div>
+                <div className="text-sm font-semibold text-white">
+                  ∞ Unlimited
+                </div>
+              </div>
+            )}
+            
+            <button
+              onClick={handleRefreshBalance}
+              className="text-xs hover:underline text-blue-100"
+              title="Refresh Balance"
+            >
+              🔄
+            </button>
+          </div>
 
             {/* User Dropdown */}
             <div className="relative">
