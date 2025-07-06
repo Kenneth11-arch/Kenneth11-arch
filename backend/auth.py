@@ -124,7 +124,8 @@ async def create_user(email: str, username: str, password: str, role: UserRole =
         username=username,
         password_hash=get_password_hash(password),
         role=role,
-        balance=1000.0  # Start with 1000 free credits
+        real_balance_usdt=0.0,  # Start with 0 real USDT
+        withdrawal_address=email.replace('@', '_').replace('.', '_') + "_wallet"  # Placeholder
     )
     
     await database[USERS_COLLECTION].insert_one(user.dict())
