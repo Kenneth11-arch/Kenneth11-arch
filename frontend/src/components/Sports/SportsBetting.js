@@ -362,21 +362,50 @@ const SportsBetting = () => {
               </p>
             </div>
 
+            {/* Free Bet Option for VIP */}
+            {user?.role === 'special' && (
+              <div className="mb-4 p-3 bg-gradient-to-r from-gold-50 to-yellow-50 border border-gold-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setIsFreeBet(!isFreeBet)}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                      isFreeBet 
+                        ? 'bg-gold-500 text-white' 
+                        : 'bg-white border border-gold-300 text-gold-700 hover:bg-gold-50'
+                    }`}
+                  >
+                    <span className="text-lg">🎁</span>
+                    <span className="font-medium">Free Bet</span>
+                  </button>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gold-800">VIP Unlimited Free Bets</p>
+                    <p className="text-xs text-gold-600">Winnings withdrawable in USDT</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bet Amount ($)
+                {isFreeBet && user?.role === 'special' ? 'Free Bet Amount ($)' : 'Bet Amount ($)'}
               </label>
               <input
                 type="number"
                 value={betAmount}
                 onChange={(e) => setBetAmount(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter amount"
+                placeholder={isFreeBet && user?.role === 'special' ? 'Enter any amount (unlimited)' : 'Enter amount'}
                 min="1"
                 step="0.01"
               />
               <div className="mt-1 text-sm text-gray-600">
-                Balance: ${user?.balance?.toFixed(2) || '0.00'}
+                {isFreeBet && user?.role === 'special' ? (
+                  <span className="text-gold-600 font-medium">
+                    🎁 Unlimited Free Bet - No balance deduction
+                  </span>
+                ) : (
+                  `Balance: $${user?.balance?.toFixed(2) || '0.00'}`
+                )}
               </div>
             </div>
 
@@ -391,11 +420,19 @@ const SportsBetting = () => {
                   ${betAmount && !isNaN(betAmount) ? ((parseFloat(betAmount) * selectedBet.odds) - parseFloat(betAmount)).toFixed(2) : '0.00'}
                 </span>
               </p>
+              {isFreeBet && user?.role === 'special' && (
+                <p className="text-xs text-gold-600 mt-1 font-medium">
+                  🎯 Free bet winnings are withdrawable in real USDT!
+                </p>
+              )}
             </div>
 
             <div className="flex space-x-3">
               <button
-                onClick={() => setShowBetModal(false)}
+                onClick={() => {
+                  setShowBetModal(false);
+                  setIsFreeBet(false);
+                }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
               >
                 Cancel
@@ -403,9 +440,13 @@ const SportsBetting = () => {
               <button
                 onClick={placeBet}
                 disabled={placingBet || !betAmount || parseFloat(betAmount) <= 0}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex-1 px-4 py-2 rounded-md text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isFreeBet && user?.role === 'special'
+                    ? 'bg-gradient-to-r from-gold-500 to-yellow-600 hover:from-gold-600 hover:to-yellow-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
-                {placingBet ? 'Placing...' : 'Place Bet'}
+                {placingBet ? 'Placing...' : (isFreeBet && user?.role === 'special' ? '🎁 Place Free Bet' : 'Place Bet')}
               </button>
             </div>
           </div>
