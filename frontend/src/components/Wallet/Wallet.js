@@ -41,8 +41,8 @@ const Wallet = () => {
       return;
     }
 
-    if (amount > user.balance) {
-      alert('Insufficient balance');
+    if (amount > (user.real_balance_usdt || 0)) {
+      alert('Insufficient real USDT balance');
       return;
     }
 
