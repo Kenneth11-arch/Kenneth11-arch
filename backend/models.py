@@ -45,7 +45,7 @@ class User(BaseModel):
     password_hash: str
     role: UserRole = UserRole.USER
     real_balance_usdt: float = 0.0  # Real USDT balance for withdrawals
-    free_bet_balance: float = float('inf') if role == UserRole.SPECIAL else 0.0  # Unlimited free bets for VIP
+    free_bet_balance: float = 0.0  # Free bet balance (999999 for VIP unlimited)
     deposit_address: Optional[str] = None
     withdrawal_address: Optional[str] = None  # User's USDT wallet for withdrawals
     is_active: bool = True
