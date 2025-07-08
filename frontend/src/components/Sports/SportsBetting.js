@@ -23,11 +23,20 @@ const SportsBetting = () => {
   useEffect(() => {
     fetchSports();
     fetchMatches();
+    if (activeTab === 'settled') {
+      fetchSettledMatches();
+    }
   }, []);
 
   useEffect(() => {
     fetchMatches();
   }, [selectedSport]);
+
+  useEffect(() => {
+    if (activeTab === 'settled') {
+      fetchSettledMatches();
+    }
+  }, [activeTab]);
 
   // Auto-refresh matches every 30 seconds
   useEffect(() => {
