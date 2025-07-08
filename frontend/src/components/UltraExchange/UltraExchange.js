@@ -12,7 +12,9 @@ const UltraExchange = () => {
   const [showLayModal, setShowLayModal] = useState(false);
   const [selectedLay, setSelectedLay] = useState(null);
   const [layStake, setLayStake] = useState('');
-  const [placingBet, setPlacingBet] = useState(false);
+  const [showFundingModal, setShowFundingModal] = useState(false);
+  const [fundingAmount, setFundingAmount] = useState('');
+  const [addingFunds, setAddingFunds] = useState(false);
   const { user, refreshBalance } = useAuth();
 
   const API_BASE = process.env.REACT_APP_BACKEND_URL;
