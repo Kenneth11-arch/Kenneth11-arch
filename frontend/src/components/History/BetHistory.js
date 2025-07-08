@@ -103,7 +103,7 @@ const BetHistory = () => {
               <span className="text-green-600 text-2xl mr-3">💰</span>
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Staked</p>
-                <p className="text-2xl font-bold text-gray-900">${stats.total_staked.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-gray-900">£{stats.total_staked.toFixed(2)}</p>
               </div>
             </div>
           </div>
@@ -116,7 +116,7 @@ const BetHistory = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Profit/Loss</p>
                 <p className={`text-2xl font-bold ${getProfitLossColor(stats.total_profit_loss)}`}>
-                  ${stats.total_profit_loss >= 0 ? '+' : ''}{stats.total_profit_loss.toFixed(2)}
+                  £{stats.total_profit_loss >= 0 ? '+' : ''}{stats.total_profit_loss.toFixed(2)}
                 </p>
               </div>
             </div>
@@ -208,7 +208,7 @@ const BetHistory = () => {
               
               <div>
                 <p className="text-xs text-gray-500">Stake</p>
-                <p className="font-medium">${bet.stake.toFixed(2)}</p>
+                <p className="font-medium">£{bet.stake.toFixed(2)}</p>
               </div>
               
               <div>
@@ -218,7 +218,7 @@ const BetHistory = () => {
               
               <div>
                 <p className="text-xs text-gray-500">Potential Return</p>
-                <p className="font-medium text-green-600">${bet.potential_return.toFixed(2)}</p>
+                <p className="font-medium text-green-600">£{bet.potential_return.toFixed(2)}</p>
               </div>
             </div>
 
@@ -226,13 +226,13 @@ const BetHistory = () => {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-3">
               <div>
                 <p className="text-xs text-gray-500">Matched Amount</p>
-                <p className="font-medium">${bet.matched_amount.toFixed(2)}</p>
+                <p className="font-medium">£{bet.matched_amount.toFixed(2)}</p>
               </div>
               
               {bet.unmatched_amount > 0 && (
                 <div>
                   <p className="text-xs text-gray-500">Unmatched</p>
-                  <p className="font-medium text-orange-600">${bet.unmatched_amount.toFixed(2)}</p>
+                  <p className="font-medium text-orange-600">£{bet.unmatched_amount.toFixed(2)}</p>
                 </div>
               )}
               
@@ -241,7 +241,7 @@ const BetHistory = () => {
                   <p className="text-xs text-gray-500">Profit/Loss</p>
                   <p className={`font-bold ${getProfitLossColor(bet.profit_loss)}`}>
                     {getProfitLossIcon(bet.profit_loss)}
-                    ${bet.profit_loss >= 0 ? '+' : ''}{bet.profit_loss.toFixed(2)}
+                    £{bet.profit_loss >= 0 ? '+' : ''}{bet.profit_loss.toFixed(2)}
                   </p>
                 </div>
               )}

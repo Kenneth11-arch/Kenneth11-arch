@@ -108,7 +108,7 @@ const SettledMatches = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Net Profit/Loss</p>
               <p className={`text-2xl font-bold ${getProfitLossColor(totalProfitLoss)}`}>
-                ${totalProfitLoss >= 0 ? '+' : ''}{totalProfitLoss.toFixed(2)}
+                £{totalProfitLoss >= 0 ? '+' : ''}{totalProfitLoss.toFixed(2)}
               </p>
             </div>
           </div>
@@ -139,7 +139,7 @@ const SettledMatches = () => {
       {user?.role !== 'special' && totalCommission > 0 && (
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-700">
-            <strong>Total Commission Paid:</strong> ${totalCommission.toFixed(2)} (2% on winning bets)
+            <strong>Total Commission Paid:</strong> £{totalCommission.toFixed(2)} (2% on winning bets)
           </p>
         </div>
       )}
@@ -191,7 +191,7 @@ const SettledMatches = () => {
                       <p className="text-sm text-gray-500">Total P&L</p>
                       <p className={`font-bold ${getProfitLossColor(settledMatch.total_profit_loss)}`}>
                         {getProfitLossIcon(settledMatch.total_profit_loss)}
-                        ${settledMatch.total_profit_loss >= 0 ? '+' : ''}{settledMatch.total_profit_loss.toFixed(2)}
+                        £{settledMatch.total_profit_loss >= 0 ? '+' : ''}{settledMatch.total_profit_loss.toFixed(2)}
                       </p>
                     </div>
                     
@@ -249,7 +249,7 @@ const SettledMatches = () => {
                           
                           <div>
                             <p className="text-xs text-gray-500">Stake</p>
-                            <p className="font-medium">${bet.stake.toFixed(2)}</p>
+                            <p className="font-medium">£{bet.stake.toFixed(2)}</p>
                           </div>
                           
                           <div>
@@ -261,7 +261,7 @@ const SettledMatches = () => {
                             <p className="text-xs text-gray-500">Profit/Loss</p>
                             <p className={`font-bold ${getProfitLossColor(bet.profit_loss)}`}>
                               {getProfitLossIcon(bet.profit_loss)}
-                              ${bet.profit_loss >= 0 ? '+' : ''}{bet.profit_loss.toFixed(2)}
+                              £{bet.profit_loss >= 0 ? '+' : ''}{bet.profit_loss.toFixed(2)}
                             </p>
                           </div>
                         </div>
@@ -282,14 +282,14 @@ const SettledMatches = () => {
                       <div>
                         <p className="text-gray-500">Total Staked</p>
                         <p className="font-semibold">
-                          ${settledMatch.user_bets.reduce((sum, bet) => sum + bet.stake, 0).toFixed(2)}
+                          £{settledMatch.user_bets.reduce((sum, bet) => sum + bet.stake, 0).toFixed(2)}
                         </p>
                       </div>
                       
                       <div>
                         <p className="text-gray-500">Total Return</p>
                         <p className="font-semibold">
-                          ${(settledMatch.user_bets.reduce((sum, bet) => sum + bet.stake, 0) + settledMatch.total_profit_loss).toFixed(2)}
+                          £{(settledMatch.user_bets.reduce((sum, bet) => sum + bet.stake, 0) + settledMatch.total_profit_loss).toFixed(2)}
                         </p>
                       </div>
                       
@@ -297,7 +297,7 @@ const SettledMatches = () => {
                         <div>
                           <p className="text-gray-500">Commission Paid</p>
                           <p className="font-semibold text-orange-600">
-                            ${settledMatch.total_commission.toFixed(2)}
+                            £{settledMatch.total_commission.toFixed(2)}
                           </p>
                         </div>
                       )}
