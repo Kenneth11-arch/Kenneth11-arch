@@ -224,13 +224,29 @@ const UltraExchange = () => {
         </div>
       </div>
 
-          {/* Statistics */}
+          {/* Statistics with Funding */}
           {statistics && (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
               <div className="bg-white p-4 rounded-lg shadow border">
-                <div className="text-sm text-gray-500">Real Balance</div>
-                <div className="text-2xl font-bold text-blue-600">£{user?.balance?.toFixed(2) || '0.00'}</div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-gray-500">UltraExchange Balance</div>
+                  <button
+                    onClick={() => setShowFundingModal(true)}
+                    className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                  >
+                    💰 Fund
+                  </button>
+                </div>
+                <div className="text-2xl font-bold text-blue-600">£{user?.real_balance_usdt?.toFixed(2) || '0.00'}</div>
                 <div className="text-xs text-gray-400">Available for lay bets</div>
+                <div className="mt-2">
+                  <button
+                    onClick={() => setShowFundingModal(true)}
+                    className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-medium py-1 px-2 rounded transition-colors"
+                  >
+                    Add Real USDT
+                  </button>
+                </div>
               </div>
               <div className="bg-white p-4 rounded-lg shadow border">
                 <div className="text-sm text-gray-500">Total Lay Bets</div>
