@@ -99,6 +99,27 @@ const SportsBetting = ({ betSlipBets, setBetSlipBets }) => {
     setShowBetModal(true);
   };
 
+  const addToBetSlip = (match, selection, odds) => {
+    const selectionName = selection === 'home' ? match.home_team :
+                         selection === 'away' ? match.away_team : 'Draw';
+    
+    const betSlipItem = {
+      id: `${match.id}-${selection}`,
+      matchId: match.id,
+      matchTitle: `${match.home_team} vs ${match.away_team}`,
+      matchTime: match.commence_time,
+      selection,
+      selectionName,
+      odds
+    };
+
+    // Check if bet already exists in slip
+    const exists = betSlipBets.find(bet => bet.id === betSlipItem.id);
+    if (!exists) {
+      setBetSlipBets(prev => [...prev, betSlipItem]);
+    }
+  };
+
   const placeBet = async () => {
     if (!selectedBet || !betAmount || parseFloat(betAmount) <= 0) {
       alert('Please enter a valid bet amount');
