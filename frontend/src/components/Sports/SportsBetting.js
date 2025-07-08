@@ -186,6 +186,33 @@ const SportsBetting = () => {
     return icons[sport] || '🏆';
   };
 
+  const getProfitLossColor = (profitLoss) => {
+    if (profitLoss > 0) return 'text-green-600';
+    if (profitLoss < 0) return 'text-red-600';
+    return 'text-gray-600';
+  };
+
+  const getProfitLossIcon = (profitLoss) => {
+    if (profitLoss > 0) return '✅';
+    if (profitLoss < 0) return '❌';
+    return '➖';
+  };
+
+  const getWinnerDisplay = (match) => {
+    if (!match.winner) return 'No winner determined';
+    
+    switch (match.winner) {
+      case 'home':
+        return `🏆 ${match.home_team}`;
+      case 'away':
+        return `🏆 ${match.away_team}`;
+      case 'draw':
+        return '🤝 Draw';
+      default:
+        return match.winner;
+    }
+  };
+
   const liveMatches = matches.filter(m => m.is_live).length;
   const upcomingMatches = matches.filter(m => m.status === 'upcoming').length;
 
