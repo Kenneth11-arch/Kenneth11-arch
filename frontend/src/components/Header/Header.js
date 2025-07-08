@@ -101,6 +101,20 @@ const Header = ({ setActiveSection, activeSection, betSlipCount, onOpenBetSlip }
             >
               🔄
             </button>
+
+            {/* Bet Slip Button */}
+            <button
+              onClick={onOpenBetSlip}
+              className="relative bg-blue-700 px-3 py-2 rounded-full hover:bg-blue-600 transition-colors"
+              title="Open Bet Slip"
+            >
+              <span className="text-white">🎯</span>
+              {betSlipCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {betSlipCount}
+                </span>
+              )}
+            </button>
           </div>
 
             {/* User Dropdown */}
