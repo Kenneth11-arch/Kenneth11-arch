@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
-const SportsBetting = () => {
+const SportsBetting = ({ betSlipBets, setBetSlipBets }) => {
   const [sports, setSports] = useState([]);
   const [matches, setMatches] = useState([]);
   const [settledMatches, setSettledMatches] = useState([]);
