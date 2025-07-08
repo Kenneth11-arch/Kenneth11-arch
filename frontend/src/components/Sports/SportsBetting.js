@@ -5,8 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 const SportsBetting = () => {
   const [sports, setSports] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [settledMatches, setSettledMatches] = useState([]);
   const [selectedSport, setSelectedSport] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [settledLoading, setSettledLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('live'); // 'live' or 'settled'
   const [error, setError] = useState('');
   const [placingBet, setPlacingBet] = useState(null);
   const [betAmount, setBetAmount] = useState('');
