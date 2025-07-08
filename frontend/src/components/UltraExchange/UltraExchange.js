@@ -307,69 +307,181 @@ const UltraExchange = () => {
 
       {/* My Lay Bets Tab */}
       {activeTab === 'mybets' && (
-        <div className="space-y-4">
-          {layBets.map((bet) => (
-            <div key={bet.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900">
-                    {bet.match_home_team} vs {bet.match_away_team}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {formatDateTime(bet.match_commence_time)}
-                  </p>
+        <div>
+          {/* Bet Filters */}
+          <div className="mb-6">
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setBetFilter('all')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  betFilter === 'all'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                All Bets ({layBets.length})
+              </button>
+              <button
+                onClick={() => setBetFilter('pending')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  betFilter === 'pending'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Active ({layBets.filter(b => b.status === 'pending' || b.status === 'matched').length})
+              </button>
+              <button
+                onClick={() => setBetFilter('settled')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  betFilter === 'settled'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Settled ({settledBets.length})
+              </button>
+            </div>
+          </div>
+
+          {/* Settled Bets Summary - only show when viewing settled bets */}
+          {betFilter === 'settled' && settledBets.length > 0 && (
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow border">
+                <div className="flex items-center">
+                  <span className="text-red-600 text-2xl mr-3">📊</span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Settled Lay Bets</p>
+                    <p className="text-2xl font-bold text-gray-900">{settledBets.length}</p>
+                  </div>
                 </div>
-                {getStatusBadge(bet.status)}
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500">Lay Selection</p>
-                  <p className="font-medium text-red-600">
-                    {bet.selection === 'home' ? bet.match_home_team :
-                     bet.selection === 'away' ? bet.match_away_team : 'Draw'}
-                  </p>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-gray-500">Lay Stake</p>
-                  <p className="font-medium">£{bet.lay_stake}</p>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-gray-500">Lay Odds</p>
-                  <p className="font-medium text-red-600">{bet.lay_odds}</p>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-gray-500">Liability</p>
-                  <p className="font-medium text-red-600">£{bet.liability}</p>
-                </div>
-                
-                {bet.profit_loss !== null && (
+              <div className="bg-white p-4 rounded-lg shadow border">
+                <div className="flex items-center">
+                  <span className={`text-2xl mr-3 ${settledProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {settledProfitLoss >= 0 ? '📈' : '📉'}
+                  </span>
                   <div>
-                    <p className="text-xs text-gray-500">Profit/Loss</p>
-                    <p className={`font-bold ${bet.profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      £{bet.profit_loss >= 0 ? '+' : ''}{bet.profit_loss}
+                    <p className="text-sm font-medium text-gray-600">Lay P&L</p>
+                    <p className={`text-2xl font-bold ${getProfitLossColor(settledProfitLoss)}`}>
+                      £{settledProfitLoss >= 0 ? '+' : ''}{settledProfitLoss.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow border">
+                <div className="flex items-center">
+                  <span className="text-green-600 text-2xl mr-3">✅</span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Win/Loss Record</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {winningBets}W / {losingBets}L
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {filteredLayBets.map((bet) => (
+              <div key={bet.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {bet.match_home_team} vs {bet.match_away_team}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {formatDateTime(bet.match_commence_time)}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    {bet.profit_loss !== null && (
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">P&L</p>
+                        <p className={`font-bold ${getProfitLossColor(bet.profit_loss)}`}>
+                          {getProfitLossIcon(bet.profit_loss)}
+                          £{bet.profit_loss >= 0 ? '+' : ''}{bet.profit_loss.toFixed(2)}
+                        </p>
+                      </div>
+                    )}
+                    {getStatusBadge(bet.status)}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500">Lay Selection</p>
+                    <p className="font-medium text-red-600">
+                      {bet.selection === 'home' ? bet.match_home_team :
+                       bet.selection === 'away' ? bet.match_away_team : 'Draw'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs text-gray-500">Lay Stake</p>
+                    <p className="font-medium">£{bet.lay_stake}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs text-gray-500">Lay Odds</p>
+                    <p className="font-medium text-red-600">{bet.lay_odds}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs text-gray-500">Liability</p>
+                    <p className="font-medium text-red-600">£{bet.liability}</p>
+                  </div>
+                  
+                  {bet.profit_loss !== null && (
+                    <div>
+                      <p className="text-xs text-gray-500">Final Result</p>
+                      <div className={`font-bold ${getProfitLossColor(bet.profit_loss)}`}>
+                        {bet.profit_loss > 0 && <p className="text-xs text-green-600">Lay Won ✅</p>}
+                        {bet.profit_loss < 0 && <p className="text-xs text-red-600">Lay Lost ❌</p>}
+                        {bet.profit_loss === 0 && <p className="text-xs text-gray-600">Break Even ➖</p>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-2 text-xs text-gray-500">
+                  Placed: {formatDateTime(bet.created_at)}
+                  {bet.settled_at && (
+                    <span className="ml-3">Settled: {formatDateTime(bet.settled_at)}</span>
+                  )}
+                </div>
+
+                {/* Show potential explanation for settled bets */}
+                {bet.status === 'settled' && bet.profit_loss !== null && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-700">
+                      <strong>Lay Bet Result:</strong> 
+                      {bet.profit_loss > 0 ? 
+                        ` You won £${bet.profit_loss.toFixed(2)} because ${bet.selection === 'home' ? bet.match_home_team : bet.selection === 'away' ? bet.match_away_team : 'Draw'} LOST the match.` :
+                        ` You lost £${Math.abs(bet.profit_loss).toFixed(2)} because ${bet.selection === 'home' ? bet.match_home_team : bet.selection === 'away' ? bet.match_away_team : 'Draw'} WON the match.`
+                      }
                     </p>
                   </div>
                 )}
               </div>
+            ))}
+          </div>
 
-              <div className="mt-2 text-xs text-gray-500">
-                Placed: {formatDateTime(bet.created_at)}
-                {bet.settled_at && (
-                  <span className="ml-3">Settled: {formatDateTime(bet.settled_at)}</span>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {layBets.length === 0 && (
+          {filteredLayBets.length === 0 && (
             <div className="text-center py-12">
               <span className="text-6xl mb-4 block">📋</span>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No lay bets yet</h3>
-              <p className="text-gray-600">Start laying bets on the markets above!</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {betFilter === 'all' ? 'No lay bets yet' : `No ${betFilter} lay bets`}
+              </h3>
+              <p className="text-gray-600">
+                {betFilter === 'all' ? 
+                  'Start laying bets on the markets above!' : 
+                  `You don't have any ${betFilter} lay bets at the moment.`
+                }
+              </p>
             </div>
           )}
         </div>
