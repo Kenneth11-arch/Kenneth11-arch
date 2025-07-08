@@ -325,9 +325,9 @@ const SportsBetting = () => {
               )}
 
               {/* No betting available */}
-              {(match.status !== 'upcoming' || !match.odds || Object.keys(match.odds).length === 0) && (
+              {(match.status === 'completed' || match.status === 'settled' || !match.odds || Object.keys(match.odds).length === 0) && (
                 <div className="text-center py-4 text-gray-500">
-                  {match.status === 'upcoming' ? 'Odds not available' : 'Betting closed'}
+                  {match.status === 'completed' || match.status === 'settled' ? 'Betting closed' : 'Odds not available'}
                 </div>
               )}
             </div>
