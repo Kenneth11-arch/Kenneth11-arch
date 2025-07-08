@@ -159,6 +159,27 @@ async def get_sports():
         {"id": "tennis", "name": "Tennis", "icon": "🎾"},
     ]
 
+@api_router.post("/admin/refresh-matches")
+async def refresh_matches():
+    """Admin endpoint to clear old matches and generate new ones"""
+    database = await get_database()
+    
+    # Clear all existing matches
+    result = await database[MATCHES_COLLECTION].delete_many({})
+    logger.info(f"Deleted {result.deleted_count} old matches")
+    
+    # Force regeneration of new matches
+    await sports_service.update_matches_in_db()
+    
+    # Get count of new matches
+    new_count = await database[MATCHES_COLLECTION].count_documents({})
+    
+    return {
+        "message": "Matches refreshed successfully",
+        "deleted_old_matches": result.deleted_count,
+        "created_new_matches": new_count
+    }
+
 @api_router.get("/matches")
 async def get_matches(sport: Optional[str] = None, status: Optional[str] = None):
     """Get matches with optional filtering"""
