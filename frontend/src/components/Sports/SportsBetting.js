@@ -458,36 +458,69 @@ const SportsBetting = ({ betSlipBets, setBetSlipBets }) => {
                 {(match.status === 'upcoming' || match.status === 'live') && match.odds && Object.keys(match.odds).length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {match.odds.home && (
-                      <button
-                        onClick={() => openBetModal(match, 'home', match.odds.home)}
-                        className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center"
-                      >
+                      <div className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center">
                         <div className="text-sm text-gray-600">Home Win</div>
-                        <div className="font-bold text-lg text-blue-600">{match.odds.home}</div>
-                        <div className="text-xs text-gray-500">{match.home_team}</div>
-                      </button>
+                        <div className="font-bold text-lg text-blue-600 mb-2">{match.odds.home}</div>
+                        <div className="text-xs text-gray-500 mb-2">{match.home_team}</div>
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={() => openBetModal(match, 'home', match.odds.home)}
+                            className="flex-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                          >
+                            Bet
+                          </button>
+                          <button
+                            onClick={() => addToBetSlip(match, 'home', match.odds.home)}
+                            className="flex-1 px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700"
+                          >
+                            +Slip
+                          </button>
+                        </div>
+                      </div>
                     )}
 
                     {match.odds.draw && (
-                      <button
-                        onClick={() => openBetModal(match, 'draw', match.odds.draw)}
-                        className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center"
-                      >
+                      <div className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center">
                         <div className="text-sm text-gray-600">Draw</div>
-                        <div className="font-bold text-lg text-blue-600">{match.odds.draw}</div>
-                        <div className="text-xs text-gray-500">Tie</div>
-                      </button>
+                        <div className="font-bold text-lg text-blue-600 mb-2">{match.odds.draw}</div>
+                        <div className="text-xs text-gray-500 mb-2">Tie</div>
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={() => openBetModal(match, 'draw', match.odds.draw)}
+                            className="flex-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                          >
+                            Bet
+                          </button>
+                          <button
+                            onClick={() => addToBetSlip(match, 'draw', match.odds.draw)}
+                            className="flex-1 px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700"
+                          >
+                            +Slip
+                          </button>
+                        </div>
+                      </div>
                     )}
 
                     {match.odds.away && (
-                      <button
-                        onClick={() => openBetModal(match, 'away', match.odds.away)}
-                        className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center"
-                      >
+                      <div className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center">
                         <div className="text-sm text-gray-600">Away Win</div>
-                        <div className="font-bold text-lg text-blue-600">{match.odds.away}</div>
-                        <div className="text-xs text-gray-500">{match.away_team}</div>
-                      </button>
+                        <div className="font-bold text-lg text-blue-600 mb-2">{match.odds.away}</div>
+                        <div className="text-xs text-gray-500 mb-2">{match.away_team}</div>
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={() => openBetModal(match, 'away', match.odds.away)}
+                            className="flex-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                          >
+                            Bet
+                          </button>
+                          <button
+                            onClick={() => addToBetSlip(match, 'away', match.odds.away)}
+                            className="flex-1 px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700"
+                          >
+                            +Slip
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
