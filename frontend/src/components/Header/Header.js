@@ -18,9 +18,10 @@ const Header = ({ setActiveSection, activeSection, betSlipCount, onOpenBetSlip }
       { id: 'wallet', label: 'Wallet', icon: '💰' },
     ];
 
-    // Add UltraExchange and Arbitrage for all users
+    // Add UltraExchange and other features for all users
     const enhancedItems = [
       ...baseItems,
+      { id: 'ultra', label: 'UltraExchange', icon: '📈' },
       { id: 'livescores', label: 'Live Scores', icon: '⚽' },
     ];
 
