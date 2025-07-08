@@ -79,7 +79,7 @@ const Header = ({ onSectionChange, activeSection }) => {
             <div className="bg-green-600 px-3 py-1 rounded-full">
               <div className="text-xs text-green-100">Real USDT</div>
               <div className="text-sm font-semibold text-white">
-                ${user?.real_balance_usdt?.toFixed(2) || '0.00'}
+                £{user?.real_balance_usdt?.toFixed(2) || '0.00'}
               </div>
             </div>
             
