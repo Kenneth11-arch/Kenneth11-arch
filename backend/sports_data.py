@@ -49,10 +49,10 @@ class SportsDataService:
             home_team = random.choice(teams)
             away_team = random.choice([t for t in teams if t != home_team])
             
-            # Generate match time (next 7 days)
+            # Generate match time (next 7 days, starting at least 1 hour from now)
             commence_time = datetime.utcnow() + timedelta(
-                days=random.randint(0, 7),
-                hours=random.randint(13, 20),  # Prime time
+                hours=random.randint(1, 4),  # 1-4 hours from now
+                days=random.randint(0, 7),   # Plus 0-7 additional days
                 minutes=random.choice([0, 15, 30, 45])
             )
             
