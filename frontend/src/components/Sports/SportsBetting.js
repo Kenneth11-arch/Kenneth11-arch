@@ -72,6 +72,18 @@ const SportsBetting = () => {
     }
   };
 
+  const fetchSettledMatches = async () => {
+    setSettledLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE}/api/bets/settled`);
+      setSettledMatches(response.data);
+    } catch (error) {
+      console.error('Error fetching settled matches:', error);
+    } finally {
+      setSettledLoading(false);
+    }
+  };
+
   const openBetModal = (match, selection, odds) => {
     setSelectedBet({
       match,
