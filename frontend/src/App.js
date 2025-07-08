@@ -61,12 +61,22 @@ const AuthenticatedApp = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <Header 
-        onSectionChange={setActiveSection} 
-        activeSection={activeSection}
+        activeSection={activeSection} 
+        setActiveSection={setActiveSection}
+        betSlipCount={betSlipBets.length}
+        onOpenBetSlip={() => setIsBetSlipOpen(true)}
       />
-      <main className="pb-8">
+      <main>
         {renderSection()}
       </main>
+      
+      {/* Bet Slip */}
+      <BetSlip
+        betSlipBets={betSlipBets}
+        setBetSlipBets={setBetSlipBets}
+        isOpen={isBetSlipOpen}
+        onClose={() => setIsBetSlipOpen(false)}
+      />
     </div>
   );
 };
