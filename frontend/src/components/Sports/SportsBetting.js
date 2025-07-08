@@ -302,18 +302,28 @@ const SportsBetting = () => {
             </button>
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Auto-refresh indicator */}
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">
-          {sports.find(s => s.id === selectedSport)?.name || 'All Sports'} Matches
-        </h2>
-        <div className="flex items-center space-x-2 text-sm text-gray-500">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          <span>Auto-updating every 30s</span>
+      {/* Auto-refresh indicator - only for live matches */}
+      {activeTab === 'live' && (
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900">
+            {sports.find(s => s.id === selectedSport)?.name || 'All Sports'} Matches
+          </h2>
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span>Auto-updating every 30s</span>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Settled matches header */}
+      {activeTab === 'settled' && (
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Settled Matches & Results</h2>
+          <p className="text-gray-600">Your completed bets with profit/loss calculations</p>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
