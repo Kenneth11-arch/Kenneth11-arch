@@ -11,9 +11,13 @@ import Wallet from './components/Wallet/Wallet';
 import UltraExchange from './components/UltraExchange/UltraExchange';
 import ArbitrageSystem from './components/Arbitrage/ArbitrageSystem';
 import Settings from './components/Settings/Settings';
+import LiveScores from './components/LiveScores/LiveScores';
+import BetSlip from './components/BetSlip/BetSlip';
 
 const AuthenticatedApp = () => {
   const [activeSection, setActiveSection] = useState('sports');
+  const [betSlipBets, setBetSlipBets] = useState([]);
+  const [isBetSlipOpen, setIsBetSlipOpen] = useState(false);
   const { user, loading } = useAuth();
 
   if (loading) {
