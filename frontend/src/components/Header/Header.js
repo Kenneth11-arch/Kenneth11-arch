@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
-const Header = ({ onSectionChange, activeSection }) => {
+const Header = ({ setActiveSection, activeSection, betSlipCount, onOpenBetSlip }) => {
   const { user, logout, refreshBalance } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
 
