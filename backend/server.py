@@ -627,6 +627,136 @@ async def shutdown_event():
     await close_mongo_connection()
     logger.info("Bet365 Clone API shutdown complete")
 
+@api_router.get("/live-scores")
+async def get_live_scores():
+    """Get live scores and match updates"""
+    try:
+        # For now, return the same as matches endpoint with live score simulation
+        database = await get_database()
+        matches = await database[MATCHES_COLLECTION].find().limit(50).to_list(50)
+        
+        scored_matches = []
+        for match_doc in matches:
+            match = Match(**match_doc)
+            
+            # Add simulated live scores for live matches
+            if match.status == MatchStatus.LIVE:
+                # Simulate scores for live matches
+                match.home_score = random.randint(0, 4)
+                match.away_score = random.randint(0, 4)
+            elif match.status in [MatchStatus.COMPLETED, MatchStatus.SETTLED]:
+                # Add final scores for completed matches
+                if match.home_score is None:
+                    match.home_score = random.randint(0, 5)
+                    match.away_score = random.randint(0, 5)
+            
+            scored_matches.append(match)
+        
+        return scored_matches
+    except Exception as e:
+        logger.error(f"Error getting live scores: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get live scores")
+
+@api_router.post("/bets/accumulator")
+async def place_accumulator_bet(
+    accumulator_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Place an accumulator bet"""
+    try:
+        selections = accumulator_data["selections"]
+        stake = accumulator_data["stake"]
+        total_odds = accumulator_data["total_odds"]
+        is_free_bet = accumulator_data.get("is_free_bet", False)
+        
+        if len(selections) < 2:
+            raise HTTPException(status_code=400, detail="Accumulator requires at least 2 selections")
+        
+        # Check balance (skip for VIP free bets)
+        if not (is_free_bet and current_user.role == "special"):
+            if stake > current_user.real_balance_usdt:
+                raise HTTPException(status_code=400, detail="Insufficient balance")
+        
+        database = await get_database()
+        
+        # Create accumulator bet record
+        accumulator_bet = {
+            "id": str(uuid4()),
+            "user_id": current_user.id,
+            "bet_type": "accumulator",
+            "selections": selections,
+            "stake": stake,
+            "total_odds": total_odds,
+            "potential_return": stake * total_odds,
+            "status": "pending",
+            "is_free_bet": is_free_bet,
+            "created_at": datetime.utcnow(),
+            "settled_at": None,
+            "profit_loss": None
+        }
+        
+        await database[BETS_COLLECTION].insert_one(accumulator_bet)
+        
+        # Deduct stake from balance (skip for VIP free bets)
+        if not (is_free_bet and current_user.role == "special"):
+            await database[USERS_COLLECTION].update_one(
+                {"id": current_user.id},
+                {"$inc": {"real_balance_usdt": -stake}}
+            )
+        
+        logger.info(f"Accumulator bet placed: {accumulator_bet['id']}")
+        return {"message": "Accumulator bet placed successfully", "bet_id": accumulator_bet["id"]}
+        
+    except Exception as e:
+        logger.error(f"Error placing accumulator bet: {e}")
+        raise HTTPException(status_code=500, detail="Failed to place accumulator bet")
+
+@api_router.post("/bets/{bet_id}/cashout")
+async def cash_out_bet(
+    bet_id: str,
+    cashout_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Cash out a bet early"""
+    try:
+        database = await get_database()
+        
+        # Find the bet
+        bet_doc = await database[BETS_COLLECTION].find_one({"id": bet_id, "user_id": current_user.id})
+        if not bet_doc:
+            raise HTTPException(status_code=404, detail="Bet not found")
+        
+        if bet_doc["status"] not in ["pending", "matched"]:
+            raise HTTPException(status_code=400, detail="Bet cannot be cashed out")
+        
+        cash_out_value = cashout_data["cash_out_value"]
+        
+        # Update bet status to cashed out
+        await database[BETS_COLLECTION].update_one(
+            {"id": bet_id},
+            {
+                "$set": {
+                    "status": "cashed_out",
+                    "cash_out_value": cash_out_value,
+                    "settled_at": datetime.utcnow(),
+                    "profit_loss": cash_out_value - bet_doc["stake"]
+                }
+            }
+        )
+        
+        # Add cash out value to user balance
+        await database[USERS_COLLECTION].update_one(
+            {"id": current_user.id},
+            {"$inc": {"real_balance_usdt": cash_out_value}}
+        )
+        
+        logger.info(f"Bet cashed out: {bet_id} for £{cash_out_value}")
+        return {"message": "Bet cashed out successfully", "cash_out_value": cash_out_value}
+        
+    except Exception as e:
+        logger.error(f"Error cashing out bet: {e}")
+        raise HTTPException(status_code=500, detail="Failed to cash out bet")
+
 # Root endpoint
 @api_router.get("/")
 async def root():
