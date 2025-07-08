@@ -196,7 +196,7 @@ const Header = ({ setActiveSection, activeSection, betSlipCount, onOpenBetSlip }
                 <button
                   key={item.id}
                   onClick={() => {
-                    onSectionChange(item.id);
+                    setActiveSection(item.id);
                     setShowDropdown(false);
                   }}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -212,7 +212,7 @@ const Header = ({ setActiveSection, activeSection, betSlipCount, onOpenBetSlip }
               
               <button
                 onClick={() => {
-                  onSectionChange('settings');
+                  setActiveSection('settings');
                   setShowDropdown(false);
                 }}
                 className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-blue-100 hover:bg-blue-500 hover:text-white transition-colors"
