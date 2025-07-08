@@ -129,7 +129,7 @@ const Header = ({ setActiveSection, activeSection, betSlipCount, onOpenBetSlip }
                   <div className="py-1">
                     <button
                       onClick={() => {
-                        onSectionChange('settings');
+                        setActiveSection('settings');
                         setShowDropdown(false);
                       }}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
