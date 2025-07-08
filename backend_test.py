@@ -8,7 +8,7 @@ import sys
 import random
 
 # Get the backend URL from the frontend .env file
-BACKEND_URL = "https://b6f65652-57aa-487a-9194-01c07ba792ea.preview.emergentagent.com/api"
+BACKEND_URL = "https://90b17104-6553-418b-93c4-95b9860aa9b4.preview.emergentagent.com/api"
 
 class Bet365BackendTest(unittest.TestCase):
     """Test suite for Bet365 Clone Backend API"""
