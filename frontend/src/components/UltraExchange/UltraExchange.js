@@ -8,6 +8,7 @@ const UltraExchange = () => {
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('matches');
+  const [betFilter, setBetFilter] = useState('all'); // 'all', 'pending', 'settled'
   const [showLayModal, setShowLayModal] = useState(false);
   const [selectedLay, setSelectedLay] = useState(null);
   const [layStake, setLayStake] = useState('');
