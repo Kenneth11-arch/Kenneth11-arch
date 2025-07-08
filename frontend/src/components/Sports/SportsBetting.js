@@ -16,6 +16,7 @@ const SportsBetting = () => {
   const [showBetModal, setShowBetModal] = useState(false);
   const [selectedBet, setSelectedBet] = useState(null);
   const [isFreeBet, setIsFreeBet] = useState(false);
+  const [expandedMatch, setExpandedMatch] = useState(null);
   const { user, refreshBalance } = useAuth();
 
   const API_BASE = process.env.REACT_APP_BACKEND_URL;
@@ -40,12 +41,14 @@ const SportsBetting = () => {
 
   // Auto-refresh matches every 30 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchMatches();
-    }, 30000);
+    if (activeTab === 'live') {
+      const interval = setInterval(() => {
+        fetchMatches();
+      }, 30000);
 
-    return () => clearInterval(interval);
-  }, [selectedSport]);
+      return () => clearInterval(interval);
+    }
+  }, [selectedSport, activeTab]);
 
   const fetchSports = async () => {
     try {
@@ -213,6 +216,15 @@ const SportsBetting = () => {
     }
   };
 
+  const toggleMatchExpansion = (matchId) => {
+    setExpandedMatch(expandedMatch === matchId ? null : matchId);
+  };
+
+  // Calculate total statistics for settled matches
+  const totalProfitLoss = settledMatches.reduce((sum, match) => sum + match.total_profit_loss, 0);
+  const winningMatches = settledMatches.filter(match => match.total_profit_loss > 0).length;
+  const losingMatches = settledMatches.filter(match => match.total_profit_loss < 0).length;
+
   const liveMatches = matches.filter(m => m.is_live).length;
   const upcomingMatches = matches.filter(m => m.status === 'upcoming').length;
 
@@ -279,28 +291,29 @@ const SportsBetting = () => {
 
       {/* Sports Filter - only show for live matches */}
       {activeTab === 'live' && (
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-2">
-          {sports.map((sport) => (
-            <button
-              key={sport.id}
-              onClick={() => setSelectedSport(sport.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                selectedSport === sport.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <span>{sport.icon}</span>
-              <span>{sport.name}</span>
-              <span className="bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">
-                {sport.id === 'all' 
-                  ? matches.length 
-                  : matches.filter(m => m.sport === sport.id).length
-                }
-              </span>
-            </button>
-          ))}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {sports.map((sport) => (
+              <button
+                key={sport.id}
+                onClick={() => setSelectedSport(sport.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  selectedSport === sport.id
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span>{sport.icon}</span>
+                <span>{sport.name}</span>
+                <span className="bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">
+                  {sport.id === 'all' 
+                    ? matches.length 
+                    : matches.filter(m => m.sport === sport.id).length
+                  }
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -319,9 +332,48 @@ const SportsBetting = () => {
 
       {/* Settled matches header */}
       {activeTab === 'settled' && (
-        <div className="mb-4">
+        <div className="mb-6">
           <h2 className="text-xl font-bold text-gray-900">Settled Matches & Results</h2>
-          <p className="text-gray-600">Your completed bets with profit/loss calculations</p>
+          <p className="text-gray-600 mb-4">Your completed bets with profit/loss calculations</p>
+          
+          {/* Settled stats summary */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-white p-4 rounded-lg shadow border">
+              <div className="flex items-center">
+                <span className="text-blue-600 text-2xl mr-3">📊</span>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Settled</p>
+                  <p className="text-2xl font-bold text-gray-900">{settledMatches.length}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow border">
+              <div className="flex items-center">
+                <span className={`text-2xl mr-3 ${totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {totalProfitLoss >= 0 ? '📈' : '📉'}
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Net Profit/Loss</p>
+                  <p className={`text-2xl font-bold ${getProfitLossColor(totalProfitLoss)}`}>
+                    £{totalProfitLoss >= 0 ? '+' : ''}{totalProfitLoss.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow border">
+              <div className="flex items-center">
+                <span className="text-green-600 text-2xl mr-3">✅</span>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Win/Loss Record</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {winningMatches}W / {losingMatches}L
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -333,102 +385,269 @@ const SportsBetting = () => {
       )}
 
       {/* Loading */}
-      {loading && (
+      {(loading || settledLoading) && (
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Loading matches...</p>
+          <p className="mt-2 text-gray-600">
+            {activeTab === 'live' ? 'Loading matches...' : 'Loading settled matches...'}
+          </p>
         </div>
       )}
 
-      {/* Matches Grid */}
-      <div className="grid gap-4">
-        {matches.map((match) => (
-          <div key={match.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-4">
-              {/* Match Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <span className="text-xl">{getSportIcon(match.sport)}</span>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {match.home_team} vs {match.away_team}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {formatDateTime(match.commence_time)}
-                    </p>
+      {/* Live Matches Grid */}
+      {activeTab === 'live' && (
+        <div className="grid gap-4">
+          {matches.map((match) => (
+            <div key={match.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div className="p-4">
+                {/* Match Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-xl">{getSportIcon(match.sport)}</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">
+                        {match.home_team} vs {match.away_team}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {formatDateTime(match.commence_time)}
+                      </p>
+                    </div>
                   </div>
+                  {getMatchStatus(match)}
                 </div>
-                {getMatchStatus(match)}
+
+                {/* Live Score */}
+                {match.is_live && (match.home_score !== null || match.away_score !== null) && (
+                  <div className="mb-3 p-2 bg-red-50 rounded-lg">
+                    <div className="flex justify-center items-center space-x-4">
+                      <span className="font-semibold">{match.home_team}</span>
+                      <span className="text-2xl font-bold text-red-600">
+                        {match.home_score || 0} - {match.away_score || 0}
+                      </span>
+                      <span className="font-semibold">{match.away_team}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Betting options available for upcoming and live matches */}
+                {(match.status === 'upcoming' || match.status === 'live') && match.odds && Object.keys(match.odds).length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {match.odds.home && (
+                      <button
+                        onClick={() => openBetModal(match, 'home', match.odds.home)}
+                        className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center"
+                      >
+                        <div className="text-sm text-gray-600">Home Win</div>
+                        <div className="font-bold text-lg text-blue-600">{match.odds.home}</div>
+                        <div className="text-xs text-gray-500">{match.home_team}</div>
+                      </button>
+                    )}
+
+                    {match.odds.draw && (
+                      <button
+                        onClick={() => openBetModal(match, 'draw', match.odds.draw)}
+                        className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center"
+                      >
+                        <div className="text-sm text-gray-600">Draw</div>
+                        <div className="font-bold text-lg text-blue-600">{match.odds.draw}</div>
+                        <div className="text-xs text-gray-500">Tie</div>
+                      </button>
+                    )}
+
+                    {match.odds.away && (
+                      <button
+                        onClick={() => openBetModal(match, 'away', match.odds.away)}
+                        className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center"
+                      >
+                        <div className="text-sm text-gray-600">Away Win</div>
+                        <div className="font-bold text-lg text-blue-600">{match.odds.away}</div>
+                        <div className="text-xs text-gray-500">{match.away_team}</div>
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* No betting available */}
+                {(match.status === 'completed' || match.status === 'settled' || !match.odds || Object.keys(match.odds).length === 0) && (
+                  <div className="text-center py-4 text-gray-500">
+                    {match.status === 'completed' || match.status === 'settled' ? 'Betting closed' : 'Odds not available'}
+                  </div>
+                )}
               </div>
+            </div>
+          ))}
 
-              {/* Live Score */}
-              {match.is_live && (match.home_score !== null || match.away_score !== null) && (
-                <div className="mb-3 p-2 bg-red-50 rounded-lg">
-                  <div className="flex justify-center items-center space-x-4">
-                    <span className="font-semibold">{match.home_team}</span>
-                    <span className="text-2xl font-bold text-red-600">
-                      {match.home_score || 0} - {match.away_score || 0}
-                    </span>
-                    <span className="font-semibold">{match.away_team}</span>
+          {/* No matches */}
+          {!loading && matches.length === 0 && (
+            <div className="text-center py-12">
+              <span className="text-6xl mb-4 block">🏟️</span>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No matches available</h3>
+              <p className="text-gray-600">Check back later for upcoming matches.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Settled Matches Grid */}
+      {activeTab === 'settled' && (
+        <div className="space-y-4">
+          {settledMatches.map((settledMatch) => {
+            const match = settledMatch.match;
+            const isExpanded = expandedMatch === match.id;
+            
+            return (
+              <div key={match.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                {/* Match Header */}
+                <div 
+                  className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => toggleMatchExpansion(match.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xl">{getSportIcon(match.sport)}</span>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">
+                          {match.home_team} vs {match.away_team}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Settled: {formatDateTime(match.settled_at)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">Your P&L</p>
+                        <p className={`font-bold text-lg ${getProfitLossColor(settledMatch.total_profit_loss)}`}>
+                          {getProfitLossIcon(settledMatch.total_profit_loss)}
+                          £{settledMatch.total_profit_loss >= 0 ? '+' : ''}{settledMatch.total_profit_loss.toFixed(2)}
+                        </p>
+                      </div>
+                      
+                      <span className="text-gray-400">
+                        {isExpanded ? '▼' : '▶'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Match Result */}
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      {/* Final Score */}
+                      {(match.home_score !== null && match.away_score !== null) && (
+                        <div className="bg-gray-100 px-3 py-1 rounded-lg">
+                          <span className="font-semibold">
+                            {match.home_score} - {match.away_score}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Winner */}
+                      <div className="bg-green-100 px-3 py-1 rounded-lg">
+                        <span className="text-sm font-medium text-green-800">
+                          {getWinnerDisplay(match)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-gray-500">
+                      {settledMatch.user_bets.length} bet{settledMatch.user_bets.length !== 1 ? 's' : ''}
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {/* Betting options available for upcoming and live matches */}
-              {(match.status === 'upcoming' || match.status === 'live') && match.odds && Object.keys(match.odds).length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {match.odds.home && (
-                    <button
-                      onClick={() => openBetModal(match, 'home', match.odds.home)}
-                      className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center"
-                    >
-                      <div className="text-sm text-gray-600">Home Win</div>
-                      <div className="font-bold text-lg text-blue-600">{match.odds.home}</div>
-                      <div className="text-xs text-gray-500">{match.home_team}</div>
-                    </button>
-                  )}
+                {/* Expanded Bet Details */}
+                {isExpanded && (
+                  <div className="border-t border-gray-200 p-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Your Bets on This Match</h4>
+                    
+                    <div className="space-y-3">
+                      {settledMatch.user_bets.map((bet) => (
+                        <div key={bet.id} className="bg-gray-50 rounded-lg p-3">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                              <p className="text-xs text-gray-500">Bet Type</p>
+                              <p className="font-medium">
+                                {bet.bet_type.toUpperCase()}
+                                <span className="ml-1 text-blue-600">
+                                  {bet.selection === 'home' ? match.home_team :
+                                   bet.selection === 'away' ? match.away_team : 'Draw'}
+                                </span>
+                              </p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-xs text-gray-500">Stake</p>
+                              <p className="font-medium">£{bet.stake.toFixed(2)}</p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-xs text-gray-500">Odds</p>
+                              <p className="font-medium text-blue-600">{bet.odds}</p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-xs text-gray-500">Profit/Loss</p>
+                              <p className={`font-bold ${getProfitLossColor(bet.profit_loss)}`}>
+                                {getProfitLossIcon(bet.profit_loss)}
+                                £{bet.profit_loss >= 0 ? '+' : ''}{bet.profit_loss.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-2 text-xs text-gray-500">
+                            Placed: {formatDateTime(bet.created_at)}
+                            {bet.settled_at && (
+                              <span className="ml-3">Settled: {formatDateTime(bet.settled_at)}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
 
-                  {match.odds.draw && (
-                    <button
-                      onClick={() => openBetModal(match, 'draw', match.odds.draw)}
-                      className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center"
-                    >
-                      <div className="text-sm text-gray-600">Draw</div>
-                      <div className="font-bold text-lg text-blue-600">{match.odds.draw}</div>
-                      <div className="text-xs text-gray-500">Tie</div>
-                    </button>
-                  )}
+                    {/* Match Summary */}
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-500">Total Staked</p>
+                          <p className="font-semibold">
+                            £{settledMatch.user_bets.reduce((sum, bet) => sum + bet.stake, 0).toFixed(2)}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <p className="text-gray-500">Total Return</p>
+                          <p className="font-semibold">
+                            £{(settledMatch.user_bets.reduce((sum, bet) => sum + bet.stake, 0) + settledMatch.total_profit_loss).toFixed(2)}
+                          </p>
+                        </div>
+                        
+                        {settledMatch.total_commission > 0 && (
+                          <div>
+                            <p className="text-gray-500">Commission Paid</p>
+                            <p className="font-semibold text-orange-600">
+                              £{settledMatch.total_commission.toFixed(2)}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-                  {match.odds.away && (
-                    <button
-                      onClick={() => openBetModal(match, 'away', match.odds.away)}
-                      className="p-3 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-center"
-                    >
-                      <div className="text-sm text-gray-600">Away Win</div>
-                      <div className="font-bold text-lg text-blue-600">{match.odds.away}</div>
-                      <div className="text-xs text-gray-500">{match.away_team}</div>
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* No betting available */}
-              {(match.status === 'completed' || match.status === 'settled' || !match.odds || Object.keys(match.odds).length === 0) && (
-                <div className="text-center py-4 text-gray-500">
-                  {match.status === 'completed' || match.status === 'settled' ? 'Betting closed' : 'Odds not available'}
-                </div>
-              )}
+          {/* No settled matches */}
+          {!settledLoading && settledMatches.length === 0 && (
+            <div className="text-center py-12">
+              <span className="text-6xl mb-4 block">📋</span>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No settled matches</h3>
+              <p className="text-gray-600">
+                Your settled match history will appear here once your bets are resolved.
+              </p>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* No matches */}
-      {!loading && matches.length === 0 && (
-        <div className="text-center py-12">
-          <span className="text-6xl mb-4 block">🏟️</span>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No matches available</h3>
-          <p className="text-gray-600">Check back later for upcoming matches.</p>
+          )}
         </div>
       )}
 
