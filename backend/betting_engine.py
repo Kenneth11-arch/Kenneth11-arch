@@ -24,8 +24,8 @@ class BettingEngine:
         
         match = Match(**match_data)
         
-        # Check if match is still open for betting
-        if match.status != MatchStatus.UPCOMING:
+        # Check if match is still open for betting (allow both upcoming and live matches)
+        if match.status not in [MatchStatus.UPCOMING, MatchStatus.LIVE]:
             raise ValueError("Match is no longer open for betting")
         
         # For free bets (VIP unlimited), no balance check needed
