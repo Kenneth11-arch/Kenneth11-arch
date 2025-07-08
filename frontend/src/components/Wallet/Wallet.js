@@ -37,7 +37,7 @@ const Wallet = () => {
 
     const amount = parseFloat(withdrawalAmount);
     if (amount < 10) {
-      alert('Minimum withdrawal amount is $10');
+      alert('Minimum withdrawal amount is £10');
       return;
     }
 
@@ -138,7 +138,7 @@ const Wallet = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-blue-100 text-sm">Real USDT Balance</p>
-            <p className="text-3xl font-bold">${user?.real_balance_usdt?.toFixed(2) || '0.00'}</p>
+            <p className="text-3xl font-bold">£{user?.real_balance_usdt?.toFixed(2) || '0.00'}</p>
             <p className="text-blue-200 text-sm mt-1">💰 Withdrawable to your wallet</p>
             {user?.role === 'special' && (
               <p className="text-blue-200 text-sm">🎖️ VIP: Unlimited Free Bets + Real USDT Winnings</p>
@@ -170,7 +170,7 @@ const Wallet = () => {
           >
             Withdraw USDT
           </button>
-          <p className="text-xs text-gray-500 mt-2">Minimum: $10 USDT</p>
+          <p className="text-xs text-gray-500 mt-2">Minimum: £10 USDT</p>
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow border">
@@ -184,14 +184,14 @@ const Wallet = () => {
                   amount: 100
                 });
                 await refreshBalance();
-                alert('$100 real USDT added to your account!');
+                alert('£100 real USDT added to your account!');
               } catch (error) {
                 alert('Failed to add USDT');
               }
             }}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
           >
-            Add $100 Real USDT
+            Add £100 Real USDT
           </button>
           <p className="text-xs text-gray-500 mt-2">For testing withdrawals</p>
         </div>
@@ -237,7 +237,7 @@ const Wallet = () => {
                 
                 <div className="text-right">
                   <p className={`font-bold ${getTransactionColor(transaction.type, transaction.amount)}`}>
-                    ${transaction.amount >= 0 ? '+' : ''}{transaction.amount.toFixed(2)}
+                    £{transaction.amount >= 0 ? '+' : ''}{transaction.amount.toFixed(2)}
                   </p>
                   {getStatusBadge(transaction.status)}
                   {transaction.tx_hash && (
@@ -286,7 +286,7 @@ const Wallet = () => {
                 step="0.01"
               />
               <div className="mt-1 text-sm text-gray-600">
-                Balance: ${user?.balance?.toFixed(2) || '0.00'} • Min: $10
+                Balance: £{user?.balance?.toFixed(2) || '0.00'} • Min: £10
               </div>
             </div>
 

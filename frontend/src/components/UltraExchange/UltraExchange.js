@@ -74,7 +74,7 @@ const UltraExchange = () => {
 
   const placeLayBet = async () => {
     if (!selectedLay || !layStake || parseFloat(layStake) < 10) {
-      alert('Minimum lay stake is $10');
+      alert('Minimum lay stake is £10');
       return;
     }
 
@@ -169,7 +169,7 @@ const UltraExchange = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
               <div className="bg-white p-4 rounded-lg shadow border">
                 <div className="text-sm text-gray-500">Real Balance</div>
-                <div className="text-2xl font-bold text-blue-600">${user?.balance?.toFixed(2) || '0.00'}</div>
+                <div className="text-2xl font-bold text-blue-600">£{user?.balance?.toFixed(2) || '0.00'}</div>
                 <div className="text-xs text-gray-400">Available for lay bets</div>
               </div>
               <div className="bg-white p-4 rounded-lg shadow border">
@@ -178,12 +178,12 @@ const UltraExchange = () => {
               </div>
               <div className="bg-white p-4 rounded-lg shadow border">
                 <div className="text-sm text-gray-500">Total Liability</div>
-                <div className="text-2xl font-bold text-red-600">${statistics.total_liability}</div>
+                <div className="text-2xl font-bold text-red-600">£{statistics.total_liability}</div>
               </div>
               <div className="bg-white p-4 rounded-lg shadow border">
                 <div className="text-sm text-gray-500">P&L</div>
                 <div className={`text-2xl font-bold ${statistics.total_profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  ${statistics.total_profit_loss >= 0 ? '+' : ''}{statistics.total_profit_loss}
+                  £{statistics.total_profit_loss >= 0 ? '+' : ''}{statistics.total_profit_loss}
                 </div>
               </div>
               <div className="bg-white p-4 rounded-lg shadow border">
@@ -192,7 +192,7 @@ const UltraExchange = () => {
               </div>
               <div className="bg-white p-4 rounded-lg shadow border">
                 <div className="text-sm text-gray-500">Pending Liability</div>
-                <div className="text-2xl font-bold text-orange-600">${statistics.pending_liability}</div>
+                <div className="text-2xl font-bold text-orange-600">£{statistics.pending_liability}</div>
               </div>
             </div>
           )}
@@ -264,7 +264,7 @@ const UltraExchange = () => {
                             <div className="text-sm text-gray-600">Lay {selection === 'home' ? match.home_team : selection === 'away' ? match.away_team : 'Draw'}</div>
                             <div className="font-bold text-lg text-red-600 group-hover:text-red-700">{odds}</div>
                             <div className="text-xs text-gray-500">
-                              Liability: ${((odds - 1) * 50).toFixed(0)} per $50
+                              Liability: £{((odds - 1) * 50).toFixed(0)} per £50
                             </div>
                           </button>
                         ))}
@@ -306,7 +306,7 @@ const UltraExchange = () => {
                 
                 <div>
                   <p className="text-xs text-gray-500">Lay Stake</p>
-                  <p className="font-medium">${bet.lay_stake}</p>
+                  <p className="font-medium">£{bet.lay_stake}</p>
                 </div>
                 
                 <div>
@@ -316,14 +316,14 @@ const UltraExchange = () => {
                 
                 <div>
                   <p className="text-xs text-gray-500">Liability</p>
-                  <p className="font-medium text-red-600">${bet.liability}</p>
+                  <p className="font-medium text-red-600">£{bet.liability}</p>
                 </div>
                 
                 {bet.profit_loss !== null && (
                   <div>
                     <p className="text-xs text-gray-500">Profit/Loss</p>
                     <p className={`font-bold ${bet.profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ${bet.profit_loss >= 0 ? '+' : ''}{bet.profit_loss}
+                      £{bet.profit_loss >= 0 ? '+' : ''}{bet.profit_loss}
                     </p>
                   </div>
                 )}
@@ -379,14 +379,14 @@ const UltraExchange = () => {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lay Stake ($)
+                Lay Stake (£)
               </label>
               <input
                 type="number"
                 value={layStake}
                 onChange={(e) => setLayStake(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Minimum $10"
+                placeholder="Minimum £10"
                 min="10"
                 step="0.01"
               />
@@ -395,10 +395,10 @@ const UltraExchange = () => {
             {layStake && !isNaN(layStake) && parseFloat(layStake) >= 10 && (
               <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                 <div className="text-sm space-y-1">
-                  <p><strong>Liability:</strong> <span className="text-red-600">${((selectedLay.layOdds - 1) * parseFloat(layStake)).toFixed(2)}</span></p>
-                  <p><strong>Potential Profit:</strong> <span className="text-green-600">${parseFloat(layStake).toFixed(2)}</span></p>
+                  <p><strong>Liability:</strong> <span className="text-red-600">£{((selectedLay.layOdds - 1) * parseFloat(layStake)).toFixed(2)}</span></p>
+                  <p><strong>Potential Profit:</strong> <span className="text-green-600">£{parseFloat(layStake).toFixed(2)}</span></p>
                   <p className="text-xs text-gray-600 mt-2">
-                    You win ${parseFloat(layStake).toFixed(2)} if {selectedLay.selection === 'home' ? selectedLay.match.home_team : selectedLay.selection === 'away' ? selectedLay.match.away_team : 'Draw'} LOSES
+                    You win £{parseFloat(layStake).toFixed(2)} if {selectedLay.selection === 'home' ? selectedLay.match.home_team : selectedLay.selection === 'away' ? selectedLay.match.away_team : 'Draw'} LOSES
                   </p>
                 </div>
               </div>
