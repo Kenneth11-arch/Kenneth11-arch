@@ -72,7 +72,7 @@ const ArbitrageSystem = () => {
       });
 
       if (response.data.success) {
-        alert(`✅ Auto-lay bet placed successfully!\n\nGuaranteed profit: $${opportunity.guaranteed_profit}\nLay bet placed on UltraExchange.`);
+        alert(`✅ Auto-lay bet placed successfully!\n\nGuaranteed profit: £${opportunity.guaranteed_profit}\nLay bet placed on UltraExchange.`);
         await refreshBalance();
         await fetchOpportunities();
       }
@@ -150,7 +150,7 @@ const ArbitrageSystem = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bet365 Stake ($)
+              Bet365 Stake (£)
             </label>
             <input
               type="number"
@@ -202,15 +202,15 @@ const ArbitrageSystem = () => {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="text-blue-700">Lay Stake:</span>
-                <p className="font-bold text-blue-800">${calculator.result.lay_stake}</p>
+                <p className="font-bold text-blue-800">£{calculator.result.lay_stake}</p>
               </div>
               <div>
                 <span className="text-blue-700">Lay Liability:</span>
-                <p className="font-bold text-red-600">${calculator.result.lay_liability}</p>
+                <p className="font-bold text-red-600">£{calculator.result.lay_liability}</p>
               </div>
               <div>
                 <span className="text-blue-700">Total Risk:</span>
-                <p className="font-bold text-orange-600">${calculator.result.total_risk}</p>
+                <p className="font-bold text-orange-600">£{calculator.result.total_risk}</p>
               </div>
             </div>
           </div>
@@ -255,7 +255,7 @@ const ArbitrageSystem = () => {
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-green-600">
-                          +${opportunity.guaranteed_profit}
+                          +£{opportunity.guaranteed_profit}
                         </div>
                         <div className="text-sm text-green-700">
                           {opportunity.profit_percentage}% Guaranteed Profit
@@ -273,7 +273,7 @@ const ArbitrageSystem = () => {
                         <div className="flex items-center space-x-3">
                           <span className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">1</span>
                           <div>
-                            <h5 className="font-bold text-blue-800">Go to Bet365 and place your ${opportunity.stake_bet365} free bet on {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'}</h5>
+                            <h5 className="font-bold text-blue-800">Go to Bet365 and place your £{opportunity.stake_bet365} free bet on {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'}</h5>
                             <p className="text-sm text-blue-600">Odds: {opportunity.bet365_odd} • Free bet (no balance deduction)</p>
                           </div>
                         </div>
@@ -306,7 +306,7 @@ const ArbitrageSystem = () => {
                           <span className="text-green-600 text-xl">✅</span>
                           <span className="font-medium text-green-800">UltraExchange account connected</span>
                         </div>
-                        <span className="text-green-600 font-bold">${user?.balance?.toFixed(2)} available</span>
+                        <span className="text-green-600 font-bold">£{user?.balance?.toFixed(2)} available</span>
                       </div>
                     </div>
 
@@ -316,8 +316,8 @@ const ArbitrageSystem = () => {
                         <div className="flex items-center space-x-3">
                           <span className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">2</span>
                           <div>
-                            <h5 className="font-bold text-red-800">Click here to place a ${opportunity.stake_ultra_lay} lay bet against {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'} on UltraExchange</h5>
-                            <p className="text-sm text-red-600">Lay Odds: {opportunity.ultra_lay_odd} • Liability: ${opportunity.liability_ultra}</p>
+                            <h5 className="font-bold text-red-800">Click here to place a £{opportunity.stake_ultra_lay} lay bet against {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'} on UltraExchange</h5>
+                            <p className="text-sm text-red-600">Lay Odds: {opportunity.ultra_lay_odd} • Liability: £{opportunity.liability_ultra}</p>
                           </div>
                         </div>
                         <div className="text-red-600 font-bold text-lg">
@@ -337,14 +337,14 @@ const ArbitrageSystem = () => {
                               Placing Lay Bet...
                             </span>
                           ) : (
-                            `📈 Click here to place ${opportunity.stake_ultra_lay} lay bet on UltraExchange`
+                            `📈 Click here to place £{opportunity.stake_ultra_lay} lay bet on UltraExchange`
                           )}
                         </button>
                       ) : (
                         <div className="text-center">
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
                             <p className="text-yellow-800 font-medium">
-                              ⚠️ Insufficient balance. Need ${opportunity.liability_ultra} to cover liability.
+                              ⚠️ Insufficient balance. Need £{opportunity.liability_ultra} to cover liability.
                             </p>
                           </div>
                           <button
@@ -363,16 +363,16 @@ const ArbitrageSystem = () => {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="bg-white p-3 rounded border">
                           <div className="text-gray-600">If {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'} wins:</div>
-                          <div className="font-bold text-green-600">+${opportunity.profit_if_bet365_wins}</div>
+                          <div className="font-bold text-green-600">+£{opportunity.profit_if_bet365_wins}</div>
                         </div>
                         <div className="bg-white p-3 rounded border">
                           <div className="text-gray-600">If {opportunity.outcome === 'home' ? opportunity.match_home_team : opportunity.outcome === 'away' ? opportunity.match_away_team : 'Draw'} loses:</div>
-                          <div className="font-bold text-green-600">+${opportunity.profit_if_ultra_wins}</div>
+                          <div className="font-bold text-green-600">+£{opportunity.profit_if_ultra_wins}</div>
                         </div>
                       </div>
                       <div className="mt-3 p-3 bg-green-100 rounded text-center">
                         <span className="font-bold text-green-800">
-                          🎯 Guaranteed Profit: +${opportunity.guaranteed_profit} regardless of outcome
+                          🎯 Guaranteed Profit: +£{opportunity.guaranteed_profit} regardless of outcome
                         </span>
                       </div>
                     </div>
@@ -410,11 +410,11 @@ const ArbitrageSystem = () => {
           <div>
             <h4 className="font-semibold text-gray-800 mb-2">Example:</h4>
             <div className="text-sm text-gray-600 space-y-1">
-              <p>• <strong>Bet365:</strong> Back Liverpool Win @ 2.50 ($100)</p>
-              <p>• <strong>UltraExchange:</strong> Lay Liverpool Win @ 2.65 ($94.34)</p>
-              <p>• <strong>Liverpool Wins:</strong> +$150 - $155.66 = -$5.66</p>
-              <p>• <strong>Liverpool Loses:</strong> -$100 + $94.34 = -$5.66</p>
-              <p>• <strong>Net Profit:</strong> $94.34 - $5.66 = <strong>+$88.68</strong></p>
+              <p>• <strong>Bet365:</strong> Back Liverpool Win @ 2.50 (£100)</p>
+              <p>• <strong>UltraExchange:</strong> Lay Liverpool Win @ 2.65 (£94.34)</p>
+              <p>• <strong>Liverpool Wins:</strong> +£150 - £155.66 = -£5.66</p>
+              <p>• <strong>Liverpool Loses:</strong> -£100 + £94.34 = -£5.66</p>
+              <p>• <strong>Net Profit:</strong> £94.34 - £5.66 = <strong>+£88.68</strong></p>
             </div>
           </div>
         </div>

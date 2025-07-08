@@ -388,7 +388,7 @@ const SportsBetting = () => {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {isFreeBet && user?.role === 'special' ? 'Free Bet Amount ($)' : 'Bet Amount ($)'}
+                {isFreeBet && user?.role === 'special' ? 'Free Bet Amount (£)' : 'Bet Amount (£)'}
               </label>
               <input
                 type="number"
@@ -405,7 +405,7 @@ const SportsBetting = () => {
                     🎁 Unlimited Free Bet - Winnings paid in real USDT
                   </span>
                 ) : (
-                  `Real USDT Balance: $${user?.real_balance_usdt?.toFixed(2) || '0.00'}`
+                  `Real USDT Balance: £${user?.real_balance_usdt?.toFixed(2) || '0.00'}`
                 )}
               </div>
             </div>
@@ -413,12 +413,12 @@ const SportsBetting = () => {
             <div className="mb-4 p-3 bg-blue-50 rounded-lg">
               <p className="text-sm text-gray-600">
                 Potential Return: <span className="font-bold text-green-600">
-                  ${betAmount && !isNaN(betAmount) ? (parseFloat(betAmount) * selectedBet.odds).toFixed(2) : '0.00'}
+                  £{betAmount && !isNaN(betAmount) ? (parseFloat(betAmount) * selectedBet.odds).toFixed(2) : '0.00'}
                 </span>
               </p>
               <p className="text-sm text-gray-600">
                 Potential Profit: <span className="font-bold text-green-600">
-                  ${betAmount && !isNaN(betAmount) ? ((parseFloat(betAmount) * selectedBet.odds) - parseFloat(betAmount)).toFixed(2) : '0.00'}
+                  £{betAmount && !isNaN(betAmount) ? ((parseFloat(betAmount) * selectedBet.odds) - parseFloat(betAmount)).toFixed(2) : '0.00'}
                 </span>
               </p>
               {isFreeBet && user?.role === 'special' && (
