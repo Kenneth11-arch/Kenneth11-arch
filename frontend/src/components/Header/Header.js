@@ -58,7 +58,7 @@ const Header = ({ setActiveSection, activeSection, betSlipCount, onOpenBetSlip }
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => onSectionChange(item.id)}
+                onClick={() => setActiveSection(item.id)}
                 className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeSection === item.id
                     ? 'bg-blue-700 text-white'
