@@ -118,6 +118,32 @@ const UltraExchange = () => {
     }
   };
 
+  const addUltraFunds = async () => {
+    if (!fundingAmount || parseFloat(fundingAmount) < 10) {
+      alert('Minimum funding amount is £10');
+      return;
+    }
+
+    setAddingFunds(true);
+    try {
+      await axios.post(`${API_BASE}/api/admin/add-real-usdt`, {
+        user_id: user.id,
+        amount: parseFloat(fundingAmount)
+      });
+
+      await refreshBalance();
+      setShowFundingModal(false);
+      setFundingAmount('');
+      
+      alert(`£${fundingAmount} real USDT added to your UltraExchange account!`);
+    } catch (error) {
+      console.error('Error adding funds:', error);
+      alert('Failed to add funds to UltraExchange');
+    } finally {
+      setAddingFunds(false);
+    }
+  };
+
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
     const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
