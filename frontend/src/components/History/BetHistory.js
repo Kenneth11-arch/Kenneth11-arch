@@ -46,12 +46,16 @@ const BetHistory = () => {
 
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayName = days[date.getDay()];
+    
+    const day = date.getDate();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${dayName} ${day}/${month}/${year} time: ${hours}:${minutes}`;
   };
 
   const getBetStatusBadge = (status) => {
