@@ -38,7 +38,7 @@ const AuthenticatedApp = () => {
   const renderSection = () => {
     switch (activeSection) {
       case 'sports':
-        return <SportsBetting />;
+        return <SportsBetting betSlipBets={betSlipBets} setBetSlipBets={setBetSlipBets} />;
       case 'history':
         return <BetHistory />;
       case 'settled':
@@ -49,10 +49,12 @@ const AuthenticatedApp = () => {
         return <UltraExchange />;
       case 'arbitrage':
         return <ArbitrageSystem />;
+      case 'livescores':
+        return <LiveScores />;
       case 'settings':
         return <Settings />;
       default:
-        return <SportsBetting />;
+        return <SportsBetting betSlipBets={betSlipBets} setBetSlipBets={setBetSlipBets} />;
     }
   };
 
