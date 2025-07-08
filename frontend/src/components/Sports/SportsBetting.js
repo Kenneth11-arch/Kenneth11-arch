@@ -251,7 +251,34 @@ const SportsBetting = () => {
         </div>
       </div>
 
-      {/* Sports Filter */}
+      {/* Navigation Tabs */}
+      <div className="mb-6">
+        <div className="flex space-x-4">
+          <button
+            onClick={() => setActiveTab('live')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'live'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            🔴 Live & Upcoming ({matches.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('settled')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'settled'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            📊 Settled Matches ({settledMatches.length})
+          </button>
+        </div>
+      </div>
+
+      {/* Sports Filter - only show for live matches */}
+      {activeTab === 'live' && (
       <div className="mb-6">
         <div className="flex flex-wrap gap-2">
           {sports.map((sport) => (
