@@ -21,7 +21,7 @@ const Header = ({ setActiveSection, activeSection, betSlipCount, onOpenBetSlip }
     // Add UltraExchange and Arbitrage for all users
     const enhancedItems = [
       ...baseItems,
-      { id: 'ultra', label: 'UltraExchange', icon: '📈' },
+      { id: 'livescores', label: 'Live Scores', icon: '⚽' },
     ];
 
     // Add arbitrage system for VIP users only
