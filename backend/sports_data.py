@@ -86,8 +86,8 @@ class SportsDataService:
             away_team = random.choice([t for t in teams if t != home_team])
             
             commence_time = datetime.utcnow() + timedelta(
-                days=random.randint(0, 3),
-                hours=random.randint(19, 22),  # Evening games
+                hours=random.randint(1, 4),  # 1-4 hours from now  
+                days=random.randint(0, 3),   # Plus 0-3 additional days
                 minutes=random.choice([0, 30])
             )
             
