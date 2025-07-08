@@ -286,8 +286,8 @@ const SportsBetting = () => {
                 </div>
               )}
 
-              {/* Betting Odds */}
-              {match.status === 'upcoming' && match.odds && Object.keys(match.odds).length > 0 && (
+              {/* Betting options available for upcoming and live matches */}
+              {(match.status === 'upcoming' || match.status === 'live') && match.odds && Object.keys(match.odds).length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {match.odds.home && (
                     <button
