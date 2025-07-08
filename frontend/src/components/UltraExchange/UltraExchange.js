@@ -149,6 +149,32 @@ const UltraExchange = () => {
     );
   };
 
+  const getProfitLossColor = (profitLoss) => {
+    if (profitLoss > 0) return 'text-green-600';
+    if (profitLoss < 0) return 'text-red-600';
+    return 'text-gray-600';
+  };
+
+  const getProfitLossIcon = (profitLoss) => {
+    if (profitLoss > 0) return '✅';
+    if (profitLoss < 0) return '❌';
+    return '➖';
+  };
+
+  // Filter lay bets based on selected filter
+  const filteredLayBets = layBets.filter(bet => {
+    if (betFilter === 'all') return true;
+    if (betFilter === 'pending') return bet.status === 'pending' || bet.status === 'matched';
+    if (betFilter === 'settled') return bet.status === 'settled';
+    return true;
+  });
+
+  // Calculate statistics for settled bets
+  const settledBets = layBets.filter(bet => bet.status === 'settled');
+  const settledProfitLoss = settledBets.reduce((sum, bet) => sum + (bet.profit_loss || 0), 0);
+  const winningBets = settledBets.filter(bet => (bet.profit_loss || 0) > 0).length;
+  const losingBets = settledBets.filter(bet => (bet.profit_loss || 0) < 0).length;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
